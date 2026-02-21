@@ -1,0 +1,12 @@
+{
+  "name": "名刺書き出し君",
+  "short_name": "名刺書き出し君",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#1a73e8",
+  "theme_color": "#1a73e8",
+  "lang": "ja",
+  "icons": [
+    { "src": "icon.png", "sizes": "192x192", "type": "image/png" }
+  ]
+}

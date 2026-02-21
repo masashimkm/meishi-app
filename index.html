@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="名刺書き出し君">
+  <link rel="manifest" href="manifest.json">
+  <title>名刺書き出し君</title>
+
+  <style>
+    /* ===== リセット・変数 ===== */
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    :root {
+      --blue:       #1a73e8;
+      --blue-dark:  #1557b0;
+      --blue-light: #e8f0fe;
+      --green:      #1e8e3e;
+      --green-bg:   #e6f4ea;
+      --red:        #c5221f;
+      --red-bg:     #fce8e6;
+      --yellow:     #b06000;
+      --yellow-bg:  #fef7e0;
+      --text:       #202124;
+      --sub:        #5f6368;
+      --border:     #dadce0;
+      --bg:         #f8f9fa;
+      --card:       #ffffff;
+      --radius:     14px;
+    }
+    html, body {
+      height: 100%; height: 100dvh;
+      font-family: -apple-system, 'Hiragino Sans', sans-serif;
+      font-size: 17px; color: var(--text);
+      background: var(--bg); overflow: hidden;
+    }
+
+    /* ===== 画面管理 ===== */
+    .screen {
+      position: fixed; inset: 0;
+      display: none; flex-direction: column;
+      overflow-y: auto; -webkit-overflow-scrolling: touch;
+    }
+    .screen.active { display: flex; }
+
+    /* ===== 共通部品 ===== */
+    .btn {
+      display: flex; align-items: center; justify-content: center; gap: 8px;
+      width: 100%; min-height: 58px; padding: 0 20px;
+      border: none; border-radius: var(--radius);
+      font-size: 18px; font-weight: 700; cursor: pointer;
+      transition: opacity .15s, background .15s;
+    }
+    .btn:active { opacity: .75; }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: var(--blue-dark); }
+    .btn-outline  { background: #fff; color: var(--blue); border: 2.5px solid var(--blue); }
+    .btn-green    { background: var(--green); color: #fff; }
+    .btn-sm { min-height: 44px; font-size: 15px; }
+
+    .field-label { display: block; font-size: 13px; font-weight: 700; color: var(--sub); margin-bottom: 5px; }
+    .text-input {
+      width: 100%; padding: 12px 14px; font-size: 17px;
+      border: 2px solid var(--border); border-radius: 10px;
+      background: #fff; color: var(--text); transition: border-color .15s;
+    }
+    .text-input:focus { border-color: var(--blue); outline: none; }
+    .err-msg { font-size: 14px; color: var(--red); margin-top: 6px; display: none; }
+    .err-msg.show { display: block; }
+    .hidden { display: none !important; }
+    .spinner {
+      width: 44px; height: 44px; border: 5px solid var(--border);
+      border-top-color: var(--blue); border-radius: 50%;
+      animation: spin .8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ===================================================
+       S1: 社員番号セットアップ
+    =================================================== */
+    #s-setup {
+      background: var(--blue);
+      justify-content: center; align-items: center;
+    }
+    .setup-card {
+      background: #fff; border-radius: 20px; padding: 36px 28px;
+      width: 100%; max-width: 400px; margin: 20px;
+      display: flex; flex-direction: column; gap: 20px;
+      box-shadow: 0 8px 32px rgba(0,0,0,.2);
+    }
+    .setup-icon { font-size: 56px; text-align: center; }
+    .setup-title { font-size: 22px; font-weight: 800; text-align: center; }
+    .setup-sub   { font-size: 15px; color: var(--sub); text-align: center; line-height: 1.6; }
+    #emp-input {
+      text-align: center; font-size: 32px; font-weight: 800;
+      letter-spacing: 14px; padding: 16px;
+    }
+    .setup-note { font-size: 13px; color: var(--sub); text-align: center; }
+
+    /* ===================================================
+       S2: カメラ
+    =================================================== */
+    #s-camera { background: #000; }
+
+    .cam-topbar {
+      position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+      display: flex; align-items: center; justify-content: space-between;
+      padding: 52px 20px 12px;
+      background: linear-gradient(to bottom, rgba(0,0,0,.7), transparent);
+    }
+    .emp-badge {
+      display: flex; align-items: center; gap: 6px;
+      background: rgba(255,255,255,.2); backdrop-filter: blur(4px);
+      border: 1px solid rgba(255,255,255,.3);
+      padding: 6px 14px; border-radius: 20px;
+    }
+    .emp-badge-label { font-size: 12px; color: rgba(255,255,255,.8); }
+    .emp-badge-num   { font-size: 17px; font-weight: 800; color: #fff; letter-spacing: 3px; }
+    .cam-change-btn  {
+      background: rgba(255,255,255,.2); border: 1px solid rgba(255,255,255,.4);
+      color: #fff; padding: 7px 16px; border-radius: 20px;
+      font-size: 14px; font-weight: 600; cursor: pointer;
+    }
+
+    /* カメラ映像 */
+    #video-el {
+      position: absolute; inset: 0; width: 100%; height: 100%;
+      object-fit: cover;
+    }
+
+    /* ガイドオーバーレイ */
+    .cam-overlay {
+      position: absolute; inset: 0; z-index: 5;
+      display: flex; flex-direction: column;
+      align-items: center; justify-content: center;
+      pointer-events: none;
+    }
+    .guide-wrap { display: flex; flex-direction: column; align-items: center; gap: 14px; }
+
+    .guide-box {
+      width: min(85vw, 460px);
+      aspect-ratio: 1.75 / 1;   /* 名刺の比率 91mm:55mm ≈ 1.65 */
+      position: relative;
+      border: 2px dashed rgba(255,255,255,.6);
+      border-radius: 6px;
+    }
+    /* 四隅ブラケット */
+    .corner {
+      position: absolute; width: 22px; height: 22px;
+      border-color: #fff; border-style: solid; border-width: 0;
+    }
+    .corner.tl { top: -2px;  left: -2px;  border-top-width: 3px; border-left-width: 3px;  border-radius: 3px 0 0 0; }
+    .corner.tr { top: -2px;  right: -2px; border-top-width: 3px; border-right-width: 3px; border-radius: 0 3px 0 0; }
+    .corner.bl { bottom: -2px; left: -2px;  border-bottom-width: 3px; border-left-width: 3px;  border-radius: 0 0 0 3px; }
+    .corner.br { bottom: -2px; right: -2px; border-bottom-width: 3px; border-right-width: 3px; border-radius: 0 0 3px 0; }
+
+    .guide-text {
+      font-size: 15px; font-weight: 600; color: rgba(255,255,255,.9);
+      text-shadow: 0 1px 4px rgba(0,0,0,.6);
+    }
+
+    /* ボトムバー */
+    .cam-bottom {
+      position: absolute; bottom: 0; left: 0; right: 0; z-index: 10;
+      display: flex; flex-direction: column; align-items: center;
+      padding: 16px 20px 44px;
+      background: linear-gradient(to top, rgba(0,0,0,.7), transparent);
+      gap: 16px;
+    }
+    .cam-tip { font-size: 14px; color: rgba(255,255,255,.8); text-align: center; }
+
+    /* シャッターボタン */
+    .shutter-btn {
+      width: 76px; height: 76px; border-radius: 50%;
+      border: 4px solid rgba(255,255,255,.9);
+      background: rgba(255,255,255,.15);
+      cursor: pointer; position: relative;
+      transition: transform .1s;
+    }
+    .shutter-btn:active { transform: scale(.92); }
+    .shutter-inner {
+      position: absolute; inset: 6px;
+      border-radius: 50%; background: #fff;
+    }
+    .shutter-btn:disabled .shutter-inner { background: rgba(255,255,255,.4); }
+
+    /* ===================================================
+       S3: プログレス（OCR中 / 保存中）
+    =================================================== */
+    #s-progress {
+      background: #fff;
+      align-items: center; justify-content: center; gap: 24px;
+    }
+    .progress-text { font-size: 19px; font-weight: 700; }
+    .progress-sub  { font-size: 15px; color: var(--sub); }
+
+    /* ===================================================
+       S4: 確認・編集
+    =================================================== */
+    #s-review { background: var(--bg); }
+
+    .review-header {
+      background: var(--blue); color: #fff;
+      padding: 52px 20px 20px;
+    }
+    .review-header h1 { font-size: 21px; font-weight: 800; }
+    .review-header p  { font-size: 14px; opacity: .85; margin-top: 4px; line-height: 1.5; }
+
+    .review-body { flex: 1; padding: 16px 16px 0; display: flex; flex-direction: column; gap: 12px; }
+
+    .preview-thumb {
+      width: 100%; max-height: 140px; object-fit: contain;
+      border-radius: 10px; background: #eee;
+    }
+
+    .fields-card {
+      background: var(--card); border-radius: var(--radius);
+      box-shadow: 0 1px 4px rgba(0,0,0,.1);
+      overflow: hidden;
+    }
+    .field-row {
+      display: flex; flex-direction: column;
+      padding: 12px 16px;
+      border-bottom: 1px solid var(--border);
+    }
+    .field-row:last-child { border-bottom: none; }
+    .field-row .field-label { margin-bottom: 4px; }
+    .field-row .text-input  { font-size: 16px; }
+    .field-row.has-val .text-input { border-color: #bbd4fb; background: #f0f6ff; }
+    .req-badge {
+      display: inline-flex; font-size: 10px; font-weight: 700;
+      background: var(--red); color: #fff;
+      padding: 1px 5px; border-radius: 3px; margin-left: 4px; vertical-align: middle;
+    }
+
+    .memo-card {
+      background: var(--card); border-radius: var(--radius);
+      padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.1);
+    }
+    textarea.text-input {
+      resize: none; font-size: 16px; line-height: 1.6;
+    }
+
+    .review-footer {
+      padding: 16px; display: flex; flex-direction: column; gap: 10px;
+      background: var(--bg);
+      border-top: 1px solid var(--border);
+    }
+
+    /* ===================================================
+       S5: 完了
+    =================================================== */
+    #s-result {
+      background: var(--card);
+      align-items: center; justify-content: center;
+    }
+    .result-inner {
+      display: flex; flex-direction: column; align-items: center;
+      gap: 16px; padding: 40px 28px; max-width: 420px; width: 100%;
+    }
+    .result-icon  { font-size: 80px; line-height: 1; }
+    .result-title { font-size: 24px; font-weight: 800; text-align: center; }
+    .result-msg   { font-size: 16px; color: var(--sub); text-align: center; line-height: 1.7; white-space: pre-wrap; }
+    .result-inner .btn { margin-top: 8px; }
+
+    /* ===================================================
+       キャンバス（非表示）
+    =================================================== */
+    #work-canvas { display: none; }
+  </style>
+</head>
+<body>
+
+<!-- ===================================================
+     S1: 社員番号セットアップ
+=================================================== -->
+<div id="s-setup" class="screen">
+  <div class="setup-card">
+    <div class="setup-icon">🪪</div>
+    <h1 class="setup-title">名刺書き出し君</h1>
+    <p class="setup-sub">あなたの社員番号を入力してください<br>次回以降は自動で入力されます</p>
+
+    <div>
+      <label class="field-label" for="emp-input">4桁の社員番号</label>
+      <input id="emp-input" class="text-input" type="text"
+        inputmode="numeric" maxlength="4" pattern="\d{4}"
+        placeholder="例：0007" autocomplete="off">
+      <p id="emp-err" class="err-msg"></p>
+    </div>
+
+    <button class="btn btn-primary" onclick="UI.saveEmpId()">
+      撮影を始める →
+    </button>
+    <p class="setup-note">※ 変更はカメラ画面の「変更」ボタンから</p>
+  </div>
+</div>
+
+<!-- ===================================================
+     S2: カメラ
+=================================================== -->
+<div id="s-camera" class="screen">
+  <!-- 映像（フルスクリーン） -->
+  <video id="video-el" autoplay playsinline muted></video>
+
+  <!-- 上部バー -->
+  <div class="cam-topbar">
+    <div class="emp-badge">
+      <span class="emp-badge-label">社員番号</span>
+      <span id="cam-emp-num" class="emp-badge-num">----</span>
+    </div>
+    <button class="cam-change-btn" onclick="UI.changeEmpId()">変更</button>
+  </div>
+
+  <!-- ガイドオーバーレイ -->
+  <div class="cam-overlay">
+    <div class="guide-wrap">
+      <div class="guide-box">
+        <div class="corner tl"></div>
+        <div class="corner tr"></div>
+        <div class="corner bl"></div>
+        <div class="corner br"></div>
+      </div>
+      <p class="guide-text">名刺を枠の中に入れてください</p>
+    </div>
+  </div>
+
+  <!-- 下部バー -->
+  <div class="cam-bottom">
+    <p class="cam-tip">💡 明るい場所で、手ブレなく撮影してください</p>
+    <button id="shutter-btn" class="shutter-btn" disabled onclick="UI.captureAndExtract()">
+      <span class="shutter-inner"></span>
+    </button>
+  </div>
+</div>
+
+<!-- ===================================================
+     S3: プログレス
+=================================================== -->
+<div id="s-progress" class="screen">
+  <div class="spinner"></div>
+  <p id="progress-text" class="progress-text">読み取り中…</p>
+  <p class="progress-sub">そのままお待ちください</p>
+</div>
+
+<!-- ===================================================
+     S4: 確認・編集
+=================================================== -->
+<div id="s-review" class="screen">
+  <div class="review-header">
+    <h1>内容を確認してください</h1>
+    <p>自動で読み取りました。違う場合はタップして修正できます</p>
+  </div>
+
+  <div class="review-body">
+    <img id="preview-thumb" class="preview-thumb" alt="撮影した名刺">
+
+    <div id="fields-card" class="fields-card">
+      <!-- JS で生成 -->
+    </div>
+
+    <div class="memo-card">
+      <label class="field-label" for="memo-input">備考（任意）</label>
+      <textarea id="memo-input" class="text-input" rows="3"
+        placeholder="展示会で取得、紹介など"></textarea>
+    </div>
+  </div>
+
+  <div class="review-footer">
+    <button class="btn btn-green" onclick="UI.saveCard()">
+      ✅ 登録する
+    </button>
+    <button class="btn btn-outline" onclick="UI.retake()">
+      📷 撮り直す
+    </button>
+  </div>
+</div>
+
+<!-- ===================================================
+     S5: 完了
+=================================================== -->
+<div id="s-result" class="screen">
+  <div class="result-inner">
+    <div id="result-icon"  class="result-icon"></div>
+    <h2 id="result-title" class="result-title"></h2>
+    <p  id="result-msg"   class="result-msg"></p>
+    <button class="btn btn-primary" onclick="UI.nextCapture()">
+      続けて撮影する
+    </button>
+    <button id="retry-btn" class="btn btn-outline btn-sm hidden" onclick="UI.saveCard()">
+      再送信する
+    </button>
+  </div>
+</div>
+
+<!-- 作業用Canvas（表示しない） -->
+<canvas id="work-canvas"></canvas>
+
+<script>
+'use strict';
+
+// ================================================================
+// ⚙️  設定（ここだけ変更してください）
+// ================================================================
+const CFG = {
+  // GASデプロイ後に発行されるURL（/execで終わるもの）
+  GAS_URL:    'https://script.google.com/macros/s/AKfycbyhPuG3_GTScc35YY4FNlrb2t6l_2WJ3j6MQyxgBfa3bJlOdc5dcHN34LQvN_m1q_lb/exec',
+  // GASのCONFIG.API_SECRETと同じ値
+  API_SECRET: 'welzowelzowelzo',
+};
+
+// ================================================================
+// 📋  フィールド定義（ラベル・必須を管理）
+// ================================================================
+const FIELDS = [
+  { key: 'companyName',  label: '会社名',          req: true  },
+  { key: 'department',   label: '部署名',          req: false },
+  { key: 'position',     label: '役職',            req: false },
+  { key: 'fullName',     label: '氏名',            req: true  },
+  { key: 'furigana',     label: 'フリガナ',        req: false },
+  { key: 'officePhone',  label: '電話（オフィス）', req: false },
+  { key: 'mobilePhone',  label: '携帯電話番号',    req: false },
+  { key: 'fax',          label: 'FAX',             req: false },
+  { key: 'email',        label: 'メールアドレス',  req: false },
+  { key: 'postalCode',   label: '郵便番号',        req: false },
+  { key: 'address',      label: '住所',            req: false },
+  { key: 'website',      label: 'WebサイトURL',    req: false },
+];
+
+// ================================================================
+// 状態管理
+// ================================================================
+const ST = {
+  empId:  '',    // 社員番号
+  base64: null,  // 撮影画像
+  reqId:  '',    // 要求ID（重複防止）
+  ts:     '',    // 撮影日時
+};
+let camStream = null;
+
+// ================================================================
+// 初期化
+// ================================================================
+document.addEventListener('DOMContentLoaded', () => {
+  const saved = localStorage.getItem('meishi_emp');
+  if (saved && /^\d{4}$/.test(saved)) {
+    ST.empId = saved;
+    _refreshEmpBadge();
+    Camera.open();
+  } else {
+    Screen.show('s-setup');
+  }
+});
+
+// ================================================================
+// 画面管理
+// ================================================================
+const Screen = {
+  show(id) {
+    document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+    document.getElementById(id).classList.add('active');
+    window.scrollTo(0, 0);
+  },
+};
+
+// ================================================================
+// UI イベントハンドラ
+// ================================================================
+const UI = {
+
+  // ── S1: 社員番号登録 ──────────────────────────────────────
+  saveEmpId() {
+    const val = document.getElementById('emp-input').value.trim();
+    const err = document.getElementById('emp-err');
+    if (!/^\d{4}$/.test(val)) {
+      err.textContent = '❌ 0〜9の4桁で入力してください（例：0007）';
+      err.classList.add('show');
+      return;
+    }
+    err.classList.remove('show');
+    ST.empId = val;
+    localStorage.setItem('meishi_emp', val);
+    _refreshEmpBadge();
+    Camera.open();
+  },
+
+  // ── S2: カメラ ────────────────────────────────────────────
+  changeEmpId() {
+    Camera.stop();
+    document.getElementById('emp-input').value = ST.empId;
+    Screen.show('s-setup');
+  },
+
+  async captureAndExtract() {
+    // 撮影
+    const imageData = Camera.capture();
+    if (!imageData) return;
+    Camera.stop();
+
+    // 日時・要求ID生成
+    ST.ts    = new Date().toISOString();
+    ST.reqId = ST.empId + '_' + ST.ts.replace(/\D/g, '').slice(0, 14);
+
+    // プレビュー画像セット
+    document.getElementById('preview-thumb').src = 'data:image/jpeg;base64,' + imageData;
+    ST.base64 = imageData;
+
+    // OCR
+    _setProgress('名刺を読み取っています…');
+    Screen.show('s-progress');
+
+    let extracted = {};
+    try {
+      const res = await Api.post({
+        action: 'extract', imageBase64: ST.base64,
+        employeeId: ST.empId, timestamp: ST.ts,
+      });
+      if (res.ok) extracted = res.extracted || {};
+      // OCR失敗でも空フォームで続行（手動入力可）
+    } catch (_) { /* ネットワーク等エラー → 空フォームで続行 */ }
+
+    Review.build(extracted);
+    Screen.show('s-review');
+  },
+
+  // ── S4: 確認・登録 ────────────────────────────────────────
+  async saveCard() {
+    const data = Review.getData();
+    const memo = document.getElementById('memo-input').value;
+
+    _setProgress('スプレッドシートに登録中…');
+    Screen.show('s-progress');
+
+    try {
+      const res = await Api.post({
+        action: 'save', data,
+        employeeId: ST.empId, timestamp: ST.ts,
+        requestId: ST.reqId, memo,
+      });
+
+      if (res.status === 'DUPLICATE') {
+        _showResult('info', 'すでに登録済みです', 'この名刺はすでに登録されています\n（重複送信を防止しました）');
+        return;
+      }
+      if (!res.ok) throw new Error(res.message || '登録に失敗しました');
+
+      const type = res.status === 'SUCCESS' ? 'success' : 'warn';
+      _showResult(type, res.status === 'SUCCESS' ? '登録完了！' : '要確認で保存しました', res.message || '');
+    } catch (err) {
+      _showResult('error', '登録に失敗しました',
+        err.message + '\n\n「再送信する」を押してもう一度お試しください', true);
+    }
+  },
+
+  retake()      { Camera.open(); },
+  nextCapture() { Camera.open(); },
+};
+
+// ================================================================
+// カメラ制御
+// ================================================================
+const Camera = {
+  async open() {
+    Screen.show('s-camera');
+    _refreshEmpBadge();
+    await this.start();
+  },
+
+  async start() {
+    try {
+      if (camStream) this.stop();
+      camStream = await navigator.mediaDevices.getUserMedia({
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1920 } },
+        audio: false,
+      });
+      const video = document.getElementById('video-el');
+      video.srcObject = camStream;
+      video.onloadedmetadata = () => {
+        document.getElementById('shutter-btn').disabled = false;
+      };
+    } catch (err) {
+      const msg = err.name === 'NotAllowedError'
+        ? 'カメラの使用が許可されていません。\n\niPhone の「設定」→「Safari」→「カメラ」\nを「許可」に変更してください\n（エラーコード: E015）'
+        : 'カメラを起動できませんでした。\nページを再読み込みしてください\n（エラーコード: E016）';
+      _showResult('error', 'カメラエラー', msg);
+    }
+  },
+
+  stop() {
+    if (camStream) {
+      camStream.getTracks().forEach(t => t.stop());
+      camStream = null;
+    }
+    document.getElementById('shutter-btn').disabled = true;
+  },
+
+  capture() {
+    const video  = document.getElementById('video-el');
+    const canvas = document.getElementById('work-canvas');
+    if (!video.videoWidth) return null;
+
+    // 最大1200px幅にリサイズ（容量削減）
+    const MAX = 1200;
+    const r   = Math.min(1, MAX / video.videoWidth);
+    canvas.width  = Math.round(video.videoWidth  * r);
+    canvas.height = Math.round(video.videoHeight * r);
+    canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+    // Base64取得（写真ライブラリには書き込まない）
+    return canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
+  },
+};
+
+// ================================================================
+// 確認フォーム
+// ================================================================
+const Review = {
+  build(data) {
+    const card = document.getElementById('fields-card');
+    card.innerHTML = FIELDS.map(f => {
+      const val  = (data[f.key] || '').replace(/"/g, '&quot;');
+      const hasV = !!val;
+      const req  = f.req ? '<span class="req-badge">必須</span>' : '';
+      return `
+        <div class="field-row${hasV ? ' has-val' : ''}">
+          <label class="field-label" for="f-${f.key}">${f.label}${req}</label>
+          <input id="f-${f.key}" class="text-input" type="text"
+            value="${val}" placeholder="（空欄でも登録できます）">
+        </div>`;
+    }).join('');
+    document.getElementById('memo-input').value = '';
+  },
+
+  getData() {
+    const out = {};
+    FIELDS.forEach(f => {
+      out[f.key] = (document.getElementById('f-' + f.key) || {}).value || '';
+    });
+    return out;
+  },
+};
+
+// ================================================================
+// API通信
+// ================================================================
+const Api = {
+  async post(data) {
+    const res = await fetch(CFG.GAS_URL, {
+      method:  'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body:    JSON.stringify({ ...data, secret: CFG.API_SECRET }),
+    });
+    if (!res.ok) throw new Error('通信エラー（HTTP ' + res.status + '）（E060）');
+    return res.json();
+  },
+};
+
+// ================================================================
+// 内部ヘルパー
+// ================================================================
+function _refreshEmpBadge() {
+  const el = document.getElementById('cam-emp-num');
+  if (el) el.textContent = ST.empId || '----';
+}
+
+function _setProgress(text) {
+  const el = document.getElementById('progress-text');
+  if (el) el.textContent = text;
+}
+
+function _showResult(type, title, msg, showRetry = false) {
+  const icons = { success: '✅', warn: '⚠️', error: '❌', info: 'ℹ️' };
+  document.getElementById('result-icon').textContent  = icons[type] || '❓';
+  document.getElementById('result-title').textContent = title;
+  document.getElementById('result-msg').textContent   = msg;
+  const rb = document.getElementById('retry-btn');
+  showRetry ? rb.classList.remove('hidden') : rb.classList.add('hidden');
+  Screen.show('s-result');
+}
+</script>
+</body>
+</html>
