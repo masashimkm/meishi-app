@@ -35,6 +35,7 @@
     .btn-green {background:var(--green);color:#fff}
     .btn-outline{background:#fff;color:var(--blue);border:2.5px solid var(--blue)}
     .btn-gray  {background:#e8eaed;color:var(--text)}
+    .btn-orange{background:#e65c00;color:#fff}
     .btn-sm    {min-height:46px;font-size:15px}
 
     /* ── 共通フォーム ── */
@@ -50,7 +51,7 @@
     .err{font-size:14px;color:var(--red);margin-top:6px;display:none}
     .err.show{display:block}
 
-    /* ── バナー（エラー/警告/成功） ── */
+    /* ── バナー ── */
     .banner{padding:14px 16px;border-radius:10px;font-size:15px;font-weight:600;
       line-height:1.6;white-space:pre-wrap;display:none}
     .banner.show{display:block}
@@ -63,9 +64,7 @@
       border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
     @keyframes spin{to{transform:rotate(360deg)}}
 
-    /* ════════════════════════════════
-       S0: 接続設定画面
-    ════════════════════════════════ */
+    /* ════ S0: 接続設定 ════ */
     #s-cfg{background:var(--blue);align-items:center;justify-content:center;padding:20px}
     .cfg-card{background:#fff;border-radius:20px;padding:28px 24px;
       width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;
@@ -77,9 +76,7 @@
     .cfg-hint b{color:var(--blue)}
     .cfg-divider{border:none;border-top:1px solid var(--border)}
 
-    /* ════════════════════════════════
-       S1: 社員番号設定
-    ════════════════════════════════ */
+    /* ════ S1: 社員番号 ════ */
     #s-emp{background:var(--blue);align-items:center;justify-content:center;padding:20px}
     .emp-card{background:#fff;border-radius:20px;padding:32px 24px;
       width:100%;max-width:420px;display:flex;flex-direction:column;gap:20px;
@@ -90,9 +87,7 @@
     #inp-emp  {text-align:center;font-size:34px;font-weight:800;letter-spacing:14px}
     .emp-note {font-size:13px;color:var(--sub);text-align:center}
 
-    /* ════════════════════════════════
-       S2: カメラ
-    ════════════════════════════════ */
+    /* ════ S2: カメラ ════ */
     #s-cam{background:#000}
     #video-el{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
     .cam-top{position:absolute;top:0;left:0;right:0;z-index:10;
@@ -108,17 +103,25 @@
     .cam-top-btn{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
       color:#fff;padding:7px 14px;border-radius:20px;font-size:13px;
       font-weight:600;cursor:pointer}
+    .cam-top-btn.active{background:rgba(255,220,100,.6);color:#fff}
+
+    /* カメラガイドボックス */
     .cam-overlay{position:absolute;inset:0;z-index:5;display:flex;
       flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-    .guide-box{width:min(84vw,440px);aspect-ratio:1.75;position:relative;
-      border:2px dashed rgba(255,255,255,.55);border-radius:6px}
+    /* 横向き（デフォルト）*/
+    .guide-box{position:relative;border:2px dashed rgba(255,255,255,.55);border-radius:6px;
+      transition:all .3s}
+    .guide-box.landscape{width:min(84vw,440px);aspect-ratio:1.75}
+    /* 縦向き */
+    .guide-box.portrait {width:min(56vw,260px);aspect-ratio:0.58}
     .cor{position:absolute;width:22px;height:22px;border-color:#fff;border-style:solid;border-width:0}
     .cor.tl{top:-2px;left:-2px;border-top-width:3px;border-left-width:3px;border-radius:3px 0 0 0}
     .cor.tr{top:-2px;right:-2px;border-top-width:3px;border-right-width:3px;border-radius:0 3px 0 0}
     .cor.bl{bottom:-2px;left:-2px;border-bottom-width:3px;border-left-width:3px;border-radius:0 0 0 3px}
     .cor.br{bottom:-2px;right:-2px;border-bottom-width:3px;border-right-width:3px;border-radius:0 0 3px 0}
     .guide-txt{font-size:15px;font-weight:600;color:rgba(255,255,255,.9);
-      text-shadow:0 1px 4px rgba(0,0,0,.6);margin-top:14px}
+      text-shadow:0 1px 4px rgba(0,0,0,.6);margin-top:14px;text-align:center}
+
     .cam-bot{position:absolute;bottom:0;left:0;right:0;z-index:10;
       display:flex;flex-direction:column;align-items:center;
       padding:14px 20px 44px;gap:14px;
@@ -131,22 +134,30 @@
     .shutter-dot{position:absolute;inset:6px;border-radius:50%;background:#fff;transition:background .15s}
     .shutter:disabled .shutter-dot{background:rgba(255,255,255,.35)}
 
-    /* ════════════════════════════════
-       S3: 処理中
-    ════════════════════════════════ */
+    /* 裏面撮影オーバーレイ */
+    #back-overlay{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.75);
+      display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px}
+    #back-overlay.show{display:flex}
+    .back-msg{color:#fff;font-size:18px;font-weight:700;text-align:center;line-height:1.6}
+    .back-btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px}
+
+    /* ════ S3: 処理中 ════ */
     #s-prog{background:#fff;align-items:center;justify-content:center;gap:22px}
     .prog-txt{font-size:19px;font-weight:700}
     .prog-sub{font-size:15px;color:var(--sub)}
+    .prog-steps{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+    .prog-step{font-size:14px;color:var(--sub);display:flex;align-items:center;gap:8px}
+    .prog-step.done{color:var(--green)}
+    .prog-step.active{color:var(--blue);font-weight:700}
 
-    /* ════════════════════════════════
-       S4: 確認・編集
-    ════════════════════════════════ */
+    /* ════ S4: 確認・編集 ════ */
     #s-rev{background:var(--bg)}
     .rev-head{background:var(--blue);color:#fff;padding:52px 18px 18px}
     .rev-head h1{font-size:20px;font-weight:800}
     .rev-head p {font-size:14px;opacity:.85;margin-top:4px;line-height:1.5}
     .rev-body{flex:1;padding:14px 14px 0;display:flex;flex-direction:column;gap:12px}
-    .thumb{width:100%;max-height:130px;object-fit:contain;border-radius:10px;background:#eee}
+    .thumb-row{display:flex;gap:8px}
+    .thumb{flex:1;max-height:120px;object-fit:contain;border-radius:10px;background:#eee}
     .fields-card{background:#fff;border-radius:var(--radius);
       box-shadow:0 1px 4px rgba(0,0,0,.1);overflow:hidden}
     .f-row{display:flex;flex-direction:column;padding:11px 14px;
@@ -161,16 +172,15 @@
     .rev-foot{padding:14px;display:flex;flex-direction:column;gap:10px;
       border-top:1px solid var(--border);background:var(--bg)}
 
-    /* ════════════════════════════════
-       S5: 完了
-    ════════════════════════════════ */
+    /* ════ S5: 完了 ════ */
     #s-done{background:#fff;align-items:center;justify-content:center}
     .done-inner{display:flex;flex-direction:column;align-items:center;
       gap:16px;padding:40px 28px;max-width:420px;width:100%}
     .done-icon {font-size:80px;line-height:1}
     .done-title{font-size:24px;font-weight:800;text-align:center}
     .done-msg  {font-size:16px;color:var(--sub);text-align:center;line-height:1.7;white-space:pre-wrap}
-    .done-inner .btn{margin-top:8px}
+    .done-inner .btn{margin-top:4px}
+    .session-info{font-size:13px;color:var(--sub);text-align:center}
 
     #work-canvas{display:none}
   </style>
@@ -188,15 +198,12 @@
 
     <div class="cfg-field">
       <label class="lbl">GASのURL</label>
-      <div class="inp-wrap" style="padding-right:0">
-        <input id="cfg-url" class="inp" type="url"
-          placeholder="https://script.google.com/macros/s/…/exec"
-          autocomplete="off" spellcheck="false">
-      </div>
+      <input id="cfg-url" class="inp" type="url"
+        placeholder="https://script.google.com/macros/s/…/exec"
+        autocomplete="off" spellcheck="false">
       <p class="cfg-hint">
         <b>確認方法：</b>GASエディタ →「デプロイ」→「デプロイを管理」<br>
-        →「ウェブアプリ」の下に表示されるURLを貼り付け<br>
-        ※ <b>/exec</b> で終わるURLを使ってください
+        →「ウェブアプリ」のURLを貼り付け（<b>/exec</b>で終わるもの）
       </p>
     </div>
 
@@ -207,9 +214,16 @@
           placeholder="GASに設定した合言葉" autocomplete="new-password">
         <button class="eye-btn" onclick="toggleEye('cfg-secret',this)">👁</button>
       </div>
+      <p class="cfg-hint"><b>GASの</b> CONFIG → API_SECRET に書いた文字列</p>
+    </div>
+
+    <div class="cfg-field">
+      <label class="lbl">書き出し先シート名（省略可）</label>
+      <input id="cfg-sheet" class="inp" type="text"
+        placeholder="例：役員用名刺データ（空白=デフォルト）">
       <p class="cfg-hint">
-        <b>確認方法：</b>GASの「コード.gs」の<br>
-        <b>CONFIG → API_SECRET</b> に書いた文字列
+        空白のままにすると「名刺データ」シートに書き出されます<br>
+        役員など個別シートに保存したい場合はシート名を指定
       </p>
     </div>
 
@@ -257,20 +271,31 @@
     </div>
     <div class="cam-top-btns">
       <button class="cam-top-btn" onclick="Emp.change()">変更</button>
+      <button id="orient-btn" class="cam-top-btn" onclick="Camera.toggleOrientation()">↕ 縦型</button>
       <button class="cam-top-btn" onclick="Cfg.open()">⚙️</button>
     </div>
   </div>
 
+  <!-- ガイドボックス -->
   <div class="cam-overlay">
-    <div class="guide-box">
+    <div id="guide-box" class="guide-box landscape">
       <div class="cor tl"></div><div class="cor tr"></div>
       <div class="cor bl"></div><div class="cor br"></div>
     </div>
-    <p class="guide-txt">名刺を枠の中に入れてください</p>
+    <p id="guide-txt" class="guide-txt">名刺を枠の中に入れてください</p>
+  </div>
+
+  <!-- 裏面撮影確認オーバーレイ -->
+  <div id="back-overlay">
+    <p class="back-msg">表面を撮影しました。<br>裏面もありますか？</p>
+    <div class="back-btns">
+      <button class="btn btn-blue" onclick="Capture.shootBack()">📷 裏面も撮影する</button>
+      <button class="btn btn-gray" onclick="Capture.proceedOCR()">→ 表面のみで続ける</button>
+    </div>
   </div>
 
   <div class="cam-bot">
-    <p class="cam-tip">💡 明るい場所で手ブレなく撮影してください</p>
+    <p id="cam-tip" class="cam-tip">💡 明るい場所で手ブレなく撮影してください</p>
     <button id="shutter" class="shutter" disabled onclick="Capture.shoot()">
       <span class="shutter-dot"></span>
     </button>
@@ -296,7 +321,10 @@
   </div>
   <div class="rev-body">
     <div id="rev-banner" class="banner"></div>
-    <img id="thumb" class="thumb" alt="撮影した名刺">
+    <div class="thumb-row">
+      <img id="thumb"      class="thumb" alt="表面">
+      <img id="thumb-back" class="thumb" alt="裏面" style="display:none">
+    </div>
     <div id="fields-card" class="fields-card"></div>
     <div class="memo-card">
       <label class="lbl" for="memo">備考（任意）</label>
@@ -317,8 +345,11 @@
     <div id="done-icon"  class="done-icon"></div>
     <h2 id="done-title" class="done-title"></h2>
     <p  id="done-msg"   class="done-msg"></p>
-    <button class="btn btn-blue" onclick="Capture.next()">続けて撮影する</button>
-    <button id="retry-btn" class="btn btn-outline btn-sm"
+    <p  id="session-info" class="session-info"></p>
+    <button class="btn btn-blue"    onclick="Capture.next()">続けて撮影する</button>
+    <button id="export-btn" class="btn btn-orange btn-sm"
+      style="display:none" onclick="Session.exportTxt()">📄 TXTで一括出力</button>
+    <button id="retry-btn"  class="btn btn-outline btn-sm"
       style="display:none" onclick="Save.run()">再送信する</button>
   </div>
 </div>
@@ -329,13 +360,14 @@
 'use strict';
 
 // ════════════════════════════════════════════
-// フィールド定義
+// フィールド定義（英語名追加）
 // ════════════════════════════════════════════
 const FIELDS = [
   {key:'companyName', label:'会社名',         req:true },
   {key:'department',  label:'部署名',         req:false},
   {key:'position',    label:'役職',           req:false},
   {key:'fullName',    label:'氏名',           req:true },
+  {key:'fullNameEn',  label:'氏名（英語）',   req:false},
   {key:'furigana',    label:'フリガナ',       req:false},
   {key:'officePhone', label:'電話（オフィス）',req:false},
   {key:'mobilePhone', label:'携帯電話番号',   req:false},
@@ -349,8 +381,54 @@ const FIELDS = [
 // ════════════════════════════════════════════
 // セッション状態
 // ════════════════════════════════════════════
-const ST = {empId:'', base64:null, reqId:'', ts:''};
-let camStream = null;
+const ST = {
+  empId:'', base64Front:null, base64Back:null, reqId:'', ts:'',
+  originalExtracted: null,  // OCRが抽出した元データ（学習用）
+  ocrHint: '',              // OCR原文の一部（学習用）
+};
+let camStream    = null;
+let isPortrait   = false;  // カメラ縦型モード
+
+// ════════════════════════════════════════════
+// セッション蓄積（一括TXTエクスポート用）
+// ════════════════════════════════════════════
+const Session = {
+  cards: [],
+  add(data, memo) {
+    this.cards.push({ ...data, memo, ts: new Date().toLocaleString('ja-JP') });
+    this.updateUI();
+  },
+  updateUI() {
+    const n = this.cards.length;
+    const si = document.getElementById('session-info');
+    const eb = document.getElementById('export-btn');
+    if (si) si.textContent = 'このセッション: ' + n + '枚スキャン済み';
+    if (eb) eb.style.display = n > 0 ? 'flex' : 'none';
+  },
+  exportTxt() {
+    if (!this.cards.length) { alert('スキャンデータがありません'); return; }
+    let txt = '=== 名刺書き出し君 エクスポート ===\n';
+    txt += '出力日時: ' + new Date().toLocaleString('ja-JP') + '\n';
+    txt += '社員番号: ' + ST.empId + '\n';
+    txt += '件数: ' + this.cards.length + '件\n';
+    txt += '='.repeat(36) + '\n\n';
+    this.cards.forEach((card, i) => {
+      txt += '--- ' + (i+1) + '件目 ---\n';
+      txt += '撮影日時: ' + card.ts + '\n';
+      FIELDS.forEach(f => {
+        if (card[f.key]) txt += f.label + ': ' + card[f.key] + '\n';
+      });
+      if (card.memo) txt += '備考: ' + card.memo + '\n';
+      txt += '\n';
+    });
+    const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
+    const a    = document.createElement('a');
+    a.href     = URL.createObjectURL(blob);
+    a.download = 'meishi_' + new Date().toISOString().slice(0,10) + '.txt';
+    a.click();
+    URL.revokeObjectURL(a.href);
+  },
+};
 
 // ════════════════════════════════════════════
 // 画面管理
@@ -362,18 +440,19 @@ function show(id) {
 }
 
 // ════════════════════════════════════════════
-// ローカルストレージ（設定の読み書き）
+// ローカルストレージ
 // ════════════════════════════════════════════
 const LS = {
   get: k       => localStorage.getItem(k) || '',
   set: (k,v)   => localStorage.setItem(k, v),
-  gasUrl:  ()  => LS.get('meishi_gas_url'),
-  secret:  ()  => LS.get('meishi_secret'),
-  empId:   ()  => LS.get('meishi_emp'),
+  gasUrl:      () => LS.get('meishi_gas_url'),
+  secret:      () => LS.get('meishi_secret'),
+  empId:       () => LS.get('meishi_emp'),
+  targetSheet: () => LS.get('meishi_target_sheet'),
 };
 
 // ════════════════════════════════════════════
-// API通信
+// API通信（Content-Type: text/plain → CORSエラー回避）
 // ════════════════════════════════════════════
 const Api = {
   async post(data) {
@@ -382,7 +461,7 @@ const Api = {
 
     let res;
     try {
-      // ⚠️ GASはContent-Type:application/jsonだとPreflightが発生しCORSエラーになる
+      // ⚠️ GASはapplication/jsonだとPreflightが発生しCORSエラーになる
       // text/plainにすることでSimple Requestになりpreflightなしで通信できる
       res = await fetch(url, {
         method:  'POST',
@@ -390,7 +469,6 @@ const Api = {
         body:    JSON.stringify({...data, secret: LS.secret()}),
       });
     } catch (err) {
-      // ネットワークエラー or CORSエラー
       throw new Error(
         'GASに接続できませんでした。\n' +
         '・URLが正しいか確認してください\n' +
@@ -414,9 +492,9 @@ const Api = {
 // ════════════════════════════════════════════
 const Cfg = {
   open() {
-    // 現在値を表示
     document.getElementById('cfg-url').value    = LS.gasUrl();
     document.getElementById('cfg-secret').value = LS.secret();
+    document.getElementById('cfg-sheet').value  = LS.targetSheet();
     _hideBanner('cfg-banner');
     Camera.stop();
     show('s-cfg');
@@ -429,13 +507,11 @@ const Cfg = {
     if (!url)    return _showBanner('cfg-banner','err','URLを入力してください');
     if (!secret) return _showBanner('cfg-banner','err','合言葉を入力してください');
     if (!url.includes('script.google.com'))
-      return _showBanner('cfg-banner','err','URLがGASのURLではないようです\nhttps://script.google.com/macros/s/…/exec の形式か確認してください');
+      return _showBanner('cfg-banner','err','URLがGASのURLではないようです');
 
     _showBanner('cfg-banner','warn','接続テスト中…');
 
     try {
-      // action:'test' を投げる → GASは E003 を返す（= 通信はできている）
-      // ⚠️ text/plain必須 (application/jsonだとCORSエラー)
       const res = await fetch(url, {
         method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'},
         body: JSON.stringify({action:'test', secret}),
@@ -443,38 +519,37 @@ const Cfg = {
       const json = await res.json();
 
       if (json.code === 'E040') {
-        _showBanner('cfg-banner','err',
-          '❌ 合言葉が違います\nGASの CONFIG → API_SECRET と同じ値を入力してください');
-      } else {
-        // E003（不明なアクション）= 通信OK・認証OK
+        _showBanner('cfg-banner','err','❌ 合言葉が違います\nGASのCONFIG → API_SECRETと同じ値を入力してください');
+      } else if (json.ok || json.code === 'OK') {
         _showBanner('cfg-banner','ok','✅ 接続成功！GASと通信できています');
+      } else {
+        _showBanner('cfg-banner','ok','✅ 接続成功！（コード: ' + json.code + '）');
       }
     } catch(err) {
       _showBanner('cfg-banner','err',
-        '❌ 接続できませんでした\n\n考えられる原因:\n' +
+        '❌ 接続できませんでした\n\n原因:\n' +
         '① URLが間違っている\n' +
-        '② GASのデプロイ設定「アクセスできるユーザー」が\n   「全員」になっていない\n\n' +
-        '技術詳細: ' + err.message);
+        '② デプロイの「アクセスできるユーザー」が「全員」でない\n\n' +
+        '詳細: ' + err.message);
     }
   },
 
   save() {
     const url    = document.getElementById('cfg-url').value.trim();
     const secret = document.getElementById('cfg-secret').value.trim();
+    const sheet  = document.getElementById('cfg-sheet').value.trim();
 
     if (!url)    return _showBanner('cfg-banner','err','URLを入力してください');
     if (!secret) return _showBanner('cfg-banner','err','合言葉を入力してください');
     if (!url.startsWith('https://script.google.com'))
-      return _showBanner('cfg-banner','err',
-        'URLが正しくないようです\nhttps://script.google.com/… で始まるURLを入力してください');
+      return _showBanner('cfg-banner','err','URLが正しくないようです\nhttps://script.google.com/…で始まるURLを入力してください');
     if (!url.endsWith('/exec'))
-      return _showBanner('cfg-banner','err',
-        'URLは /exec で終わっている必要があります\n「デプロイを管理」で表示されるURLをご確認ください');
+      return _showBanner('cfg-banner','err','URLは /exec で終わっている必要があります');
 
-    LS.set('meishi_gas_url', url);
-    LS.set('meishi_secret',  secret);
+    LS.set('meishi_gas_url',      url);
+    LS.set('meishi_secret',       secret);
+    LS.set('meishi_target_sheet', sheet);
 
-    // 次の画面へ
     const empId = LS.empId();
     if (empId && /^\d{4}$/.test(empId)) {
       ST.empId = empId;
@@ -503,7 +578,11 @@ const Emp = {
     _refreshBadge();
     Camera.open();
   },
-  change() { Camera.stop(); document.getElementById('inp-emp').value = ST.empId; show('s-emp'); },
+  change() {
+    Camera.stop();
+    document.getElementById('inp-emp').value = ST.empId;
+    show('s-emp');
+  },
 };
 
 // ════════════════════════════════════════════
@@ -513,13 +592,14 @@ const Camera = {
   async open() {
     show('s-cam');
     _refreshBadge();
+    document.getElementById('back-overlay').classList.remove('show');
     await this.start();
   },
   async start() {
     try {
       if (camStream) this.stop();
       camStream = await navigator.mediaDevices.getUserMedia({
-        video:{facingMode:{ideal:'environment'}, width:{ideal:1920}}, audio:false,
+        video:{facingMode:{ideal:'environment'}, width:{ideal:1280}}, audio:false,
       });
       const v = document.getElementById('video-el');
       v.srcObject = camStream;
@@ -527,7 +607,7 @@ const Camera = {
     } catch(err) {
       Result.show('error','カメラエラー',
         err.name === 'NotAllowedError'
-          ? 'カメラの使用が許可されていません。\n\niPhoneの「設定」→「Safari」→「カメラ」\nを「許可」に変更してください'
+          ? 'カメラの使用が許可されていません。\niPhoneの「設定」→「Safari」→「カメラ」を「許可」に変更してください'
           : 'カメラを起動できませんでした。\nページを再読み込みしてください\n（' + err.message + '）');
     }
   },
@@ -536,31 +616,93 @@ const Camera = {
     const s = document.getElementById('shutter');
     if (s) s.disabled = true;
   },
+  toggleOrientation() {
+    isPortrait = !isPortrait;
+    const box = document.getElementById('guide-box');
+    const btn = document.getElementById('orient-btn');
+    const txt = document.getElementById('guide-txt');
+    const tip = document.getElementById('cam-tip');
+    if (isPortrait) {
+      box.className = 'guide-box portrait';
+      btn.textContent = '↔ 横型';
+      btn.classList.add('active');
+      txt.textContent = '縦型名刺を枠の中に入れてください';
+      tip.textContent = '💡 縦型名刺は枠を縦向きにしました';
+    } else {
+      box.className = 'guide-box landscape';
+      btn.textContent = '↕ 縦型';
+      btn.classList.remove('active');
+      txt.textContent = '名刺を枠の中に入れてください';
+      tip.textContent = '💡 明るい場所で手ブレなく撮影してください';
+    }
+  },
 };
 
 // ════════════════════════════════════════════
-// 撮影 → OCR
+// 撮影 → 両面確認 → OCR
 // ════════════════════════════════════════════
 const Capture = {
-  async shoot() {
+  // 表面撮影
+  shoot() {
     const video  = document.getElementById('video-el');
     const canvas = document.getElementById('work-canvas');
     if (!video.videoWidth) return;
 
-    // リサイズして撮影（写真ライブラリには保存しない）
-    const MAX = 1200, r = Math.min(1, MAX / video.videoWidth);
+    // リサイズ（800pxに縮小して高速化）
+    const MAX = 800, r = Math.min(1, MAX / Math.max(video.videoWidth, video.videoHeight));
     canvas.width  = Math.round(video.videoWidth  * r);
     canvas.height = Math.round(video.videoHeight * r);
     canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
 
-    document.getElementById('thumb').src = canvas.toDataURL('image/jpeg', 0.85);
-    ST.base64 = canvas.toDataURL('image/jpeg', 0.85).split(',')[1];
-    ST.ts     = new Date().toISOString();
-    ST.reqId  = ST.empId + '_' + ST.ts.replace(/\D/g,'').slice(0,14);
+    ST.base64Front = canvas.toDataURL('image/jpeg', 0.82).split(',')[1];
+    ST.base64Back  = null;
+    ST.ts    = new Date().toISOString();
+    ST.reqId = ST.empId + '_' + ST.ts.replace(/\D/g,'').slice(0,14);
 
+    document.getElementById('thumb').src = canvas.toDataURL('image/jpeg', 0.82);
+    document.getElementById('thumb-back').style.display = 'none';
+
+    // 裏面撮影を確認
+    document.getElementById('back-overlay').classList.add('show');
+  },
+
+  // 裏面撮影
+  shootBack() {
+    document.getElementById('back-overlay').classList.remove('show');
+    const tip = document.getElementById('cam-tip');
+    tip.textContent = '📷 裏面を枠の中に入れて撮影してください';
+
+    // シャッターを一時的に裏面撮影モードに
+    const shutter = document.getElementById('shutter');
+    shutter.onclick = () => {
+      const video  = document.getElementById('video-el');
+      const canvas = document.getElementById('work-canvas');
+      if (!video.videoWidth) return;
+
+      const MAX = 800, r = Math.min(1, MAX / Math.max(video.videoWidth, video.videoHeight));
+      canvas.width  = Math.round(video.videoWidth  * r);
+      canvas.height = Math.round(video.videoHeight * r);
+      canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+      ST.base64Back = canvas.toDataURL('image/jpeg', 0.82).split(',')[1];
+
+      const tb = document.getElementById('thumb-back');
+      tb.src           = canvas.toDataURL('image/jpeg', 0.82);
+      tb.style.display = 'block';
+
+      // シャッターをデフォルトに戻す
+      shutter.onclick = () => Capture.shoot();
+      tip.textContent = '💡 明るい場所で手ブレなく撮影してください';
+
+      this.proceedOCR();
+    };
+  },
+
+  // OCR処理へ進む
+  async proceedOCR() {
+    document.getElementById('back-overlay').classList.remove('show');
     Camera.stop();
 
-    // OCR開始
     _setProgress('名刺を読み取っています…');
     show('s-prog');
 
@@ -568,23 +710,29 @@ const Capture = {
     let warnMsg   = '';
 
     try {
-      const res = await Api.post({
-        action:'extract', imageBase64:ST.base64,
-        employeeId:ST.empId, timestamp:ST.ts,
-      });
+      const payload = {
+        action:      'extract',
+        imageBase64: ST.base64Front,
+        employeeId:  ST.empId,
+        timestamp:   ST.ts,
+      };
+      if (ST.base64Back) payload.imageBase64Back = ST.base64Back;
+
+      const res = await Api.post(payload);
 
       if (res.ok) {
         extracted = res.extracted || {};
+        // 学習用に元データを保存
+        ST.originalExtracted = JSON.parse(JSON.stringify(extracted));
+        ST.ocrHint           = res.ocrHint || '';
         const filledCount = Object.values(extracted).filter(v => v && v.trim()).length;
         if (filledCount === 0) {
           warnMsg = '⚠️ 文字を読み取りましたが情報を抽出できませんでした\n項目を手入力して登録できます';
         }
       } else {
-        // GASからエラーコードが返った
         warnMsg = '⚠️ 読み取りエラー（' + (res.code||'?') + '）\n' + (res.message||'不明なエラー') + '\n\n項目を手入力して登録できます';
       }
     } catch(err) {
-      // 通信エラー
       warnMsg = '⚠️ 通信エラー\n' + err.message + '\n\n項目を手入力して登録できます';
     }
 
@@ -592,8 +740,15 @@ const Capture = {
     show('s-rev');
   },
 
-  retake() { Camera.open(); },
-  next()   { Camera.open(); },
+  retake() {
+    // シャッターをデフォルトに戻す
+    document.getElementById('shutter').onclick = () => Capture.shoot();
+    Camera.open();
+  },
+  next() {
+    document.getElementById('shutter').onclick = () => Capture.shoot();
+    Camera.open();
+  },
 };
 
 // ════════════════════════════════════════════
@@ -601,12 +756,10 @@ const Capture = {
 // ════════════════════════════════════════════
 const Review = {
   build(data, warnMsg) {
-    // バナー表示
     const banner = document.getElementById('rev-banner');
     if (warnMsg) { banner.textContent = warnMsg; banner.className = 'banner warn show'; }
     else         { banner.className = 'banner'; }
 
-    // フィールド生成
     document.getElementById('fields-card').innerHTML = FIELDS.map(f => {
       const val  = (data[f.key] || '').replace(/"/g,'&quot;');
       const req  = f.req ? '<span class="req">必須</span>' : '';
@@ -634,16 +787,32 @@ const Save = {
     _setProgress('スプレッドシートに登録中…');
     show('s-prog');
 
+    const memoVal = document.getElementById('memo').value;
+    const revData = Review.getData();
+
     try {
-      const res = await Api.post({
-        action:'save', data:Review.getData(),
-        employeeId:ST.empId, timestamp:ST.ts,
-        requestId:ST.reqId,  memo:document.getElementById('memo').value,
-      });
+      const payload = {
+        action:    'save',
+        data:      revData,
+        employeeId: ST.empId,
+        timestamp:  ST.ts,
+        requestId:  ST.reqId,
+        memo:       memoVal,
+        // 学習データ（OCR元データとユーザー修正を比較してGASで保存）
+        originalExtracted: ST.originalExtracted,
+        ocrHint:           ST.ocrHint,
+      };
+      // 書き出し先シートが指定されている場合は追加
+      const targetSheet = LS.targetSheet();
+      if (targetSheet) payload.targetSheet = targetSheet;
+
+      const res = await Api.post(payload);
 
       if (res.status === 'DUPLICATE') {
         Result.show('info','すでに登録済みです','この名刺はすでに登録されています\n（重複送信を防止しました）');
       } else if (res.ok) {
+        // セッションデータに追加
+        Session.add(revData, memoVal);
         Result.show(
           res.status === 'SUCCESS' ? 'success' : 'warn',
           res.status === 'SUCCESS' ? '登録完了！' : '要確認で保存しました',
@@ -668,6 +837,7 @@ const Result = {
     document.getElementById('done-title').textContent = title;
     document.getElementById('done-msg').textContent   = msg;
     document.getElementById('retry-btn').style.display = showRetry ? 'flex' : 'none';
+    Session.updateUI();
     show('s-done');
   },
 };
@@ -708,13 +878,9 @@ document.addEventListener('DOMContentLoaded', () => {
   const secret = LS.secret();
   const empId  = LS.empId();
 
-  // GAS URL・合言葉が未設定 → 設定画面へ
   if (!gasUrl || !secret) { show('s-cfg'); return; }
-
-  // 社員番号が未設定 → 社員番号入力へ
   if (!empId || !/^\d{4}$/.test(empId)) { show('s-emp'); return; }
 
-  // すべて設定済み → カメラへ
   ST.empId = empId;
   _refreshBadge();
   Camera.open();
