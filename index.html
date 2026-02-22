@@ -382,9 +382,11 @@ const Api = {
 
     let res;
     try {
+      // ⚠️ GASはContent-Type:application/jsonだとPreflightが発生しCORSエラーになる
+      // text/plainにすることでSimple Requestになりpreflightなしで通信できる
       res = await fetch(url, {
         method:  'POST',
-        headers: {'Content-Type':'application/json'},
+        headers: {'Content-Type':'text/plain;charset=UTF-8'},
         body:    JSON.stringify({...data, secret: LS.secret()}),
       });
     } catch (err) {
@@ -433,8 +435,9 @@ const Cfg = {
 
     try {
       // action:'test' を投げる → GASは E003 を返す（= 通信はできている）
+      // ⚠️ text/plain必須 (application/jsonだとCORSエラー)
       const res = await fetch(url, {
-        method:'POST', headers:{'Content-Type':'application/json'},
+        method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'},
         body: JSON.stringify({action:'test', secret}),
       });
       const json = await res.json();

@@ -1,12 +1,27 @@
 {
   "name": "名刺書き出し君",
-  "short_name": "名刺書き出し君",
-  "start_url": "/",
+  "short_name": "名刺書出し",
+  "description": "名刺を撮影してGoogle Sheetsに自動登録するツール",
+  "start_url": "./index.html",
+  "scope": "./",
   "display": "standalone",
+  "orientation": "portrait",
   "background_color": "#1a73e8",
   "theme_color": "#1a73e8",
   "lang": "ja",
   "icons": [
-    { "src": "icon.png", "sizes": "192x192", "type": "image/png" }
-  ]
+    {
+      "src": "icon.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"]
 }
