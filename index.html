@@ -6,242 +6,312 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="名刺書き出し君">
+  <!-- v2.4: 多拠点・子会社・他社対応（会社名表示・Cfg.save非同期化） -->
   <link rel="manifest" href="manifest.json">
   <title>名刺書き出し君</title>
   <style>
-    *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-    :root{
-      --blue:#1a73e8;--blue-dk:#1557b0;--blue-lt:#e8f0fe;
-      --green:#1e8e3e;--green-bg:#e6f4ea;
-      --red:#c5221f;--red-bg:#fce8e6;
-      --warn:#b06000;--warn-bg:#fef7e0;
-      --text:#202124;--sub:#5f6368;--border:#dadce0;--bg:#f8f9fa;
-      --radius:14px;
-    }
-    html,body{height:100%;height:100dvh;font-family:-apple-system,'Hiragino Sans',sans-serif;
-      font-size:17px;color:var(--text);background:var(--bg);overflow:hidden}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+:root{
+  --blue:#1a73e8;--blue-dk:#1557b0;--blue-lt:#e8f0fe;
+  --green:#1e8e3e;--green-bg:#e6f4ea;
+  --red:#c5221f;--red-bg:#fce8e6;
+  --warn:#b06000;--warn-bg:#fef7e0;
+  --purple:#6264a7;
+  --text:#202124;--sub:#5f6368;--border:#dadce0;--bg:#f8f9fa;
+  --radius:14px;
+  --font-body:18px;
+  --font-label:15px;
+  --font-small:14px;
+}
+html,body{height:100%;height:100dvh;font-family:-apple-system,'Hiragino Sans',sans-serif;
+  font-size:var(--font-body);color:var(--text);background:var(--bg);overflow:hidden}
 
-    /* ── 画面管理 ── */
-    .screen{position:fixed;inset:0;display:none;flex-direction:column;
-      overflow-y:auto;-webkit-overflow-scrolling:touch}
-    .screen.active{display:flex}
+/* ── 画面管理 ── */
+.screen{position:fixed;inset:0;display:none;flex-direction:column;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.screen.active{display:flex}
 
-    /* ── 共通ボタン ── */
-    .btn{display:flex;align-items:center;justify-content:center;gap:8px;
-      width:100%;min-height:58px;padding:0 20px;border:none;border-radius:var(--radius);
-      font-size:18px;font-weight:700;cursor:pointer;transition:opacity .15s}
-    .btn:active{opacity:.75}
-    .btn-blue  {background:var(--blue);color:#fff}
-    .btn-green {background:var(--green);color:#fff}
-    .btn-outline{background:#fff;color:var(--blue);border:2.5px solid var(--blue)}
-    .btn-gray  {background:#e8eaed;color:var(--text)}
-    .btn-orange{background:#e65c00;color:#fff}
-    .btn-sm    {min-height:46px;font-size:15px}
+/* ── 共通ボタン ── */
+.btn{display:flex;align-items:center;justify-content:center;gap:8px;
+  width:100%;min-height:62px;padding:0 20px;border:none;border-radius:var(--radius);
+  font-size:19px;font-weight:700;cursor:pointer;transition:opacity .15s;line-height:1.4}
+.btn:active{opacity:.75}
+.btn-blue  {background:var(--blue);color:#fff}
+.btn-green {background:var(--green);color:#fff}
+.btn-outline{background:#fff;color:var(--blue);border:2.5px solid var(--blue)}
+.btn-gray  {background:#e8eaed;color:var(--text)}
+.btn-orange{background:#e65c00;color:#fff}
+.btn-purple{background:var(--purple);color:#fff}
+.btn-sm    {min-height:50px;font-size:16px}
 
-    /* ── 共通フォーム ── */
-    .lbl{display:block;font-size:13px;font-weight:700;color:var(--sub);margin-bottom:5px}
-    .inp{width:100%;padding:13px 14px;font-size:16px;border:2px solid var(--border);
-      border-radius:10px;background:#fff;color:var(--text);transition:border-color .15s;
-      -webkit-appearance:none}
-    .inp:focus{border-color:var(--blue);outline:none}
-    .inp-wrap{position:relative}
-    .inp-wrap .inp{padding-right:48px}
-    .eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);
-      background:none;border:none;font-size:20px;cursor:pointer;color:var(--sub)}
-    .err{font-size:14px;color:var(--red);margin-top:6px;display:none}
-    .err.show{display:block}
+/* ── 共通フォーム ── */
+.lbl{display:block;font-size:var(--font-label);font-weight:700;color:var(--sub);margin-bottom:6px}
+.inp{width:100%;padding:15px 14px;font-size:17px;border:2px solid var(--border);
+  border-radius:10px;background:#fff;color:var(--text);transition:border-color .15s;-webkit-appearance:none}
+.inp:focus{border-color:var(--blue);outline:none}
+.inp-wrap{position:relative}
+.inp-wrap .inp{padding-right:48px}
+.eye-btn{position:absolute;right:12px;top:50%;transform:translateY(-50%);
+  background:none;border:none;font-size:20px;cursor:pointer}
+.err{font-size:var(--font-small);color:var(--red);margin-top:6px;display:none}
+.err.show{display:block}
 
-    /* ── バナー ── */
-    .banner{padding:14px 16px;border-radius:10px;font-size:15px;font-weight:600;
-      line-height:1.6;white-space:pre-wrap;display:none}
-    .banner.show{display:block}
-    .banner.err {background:var(--red-bg);color:var(--red)}
-    .banner.warn{background:var(--warn-bg);color:var(--warn)}
-    .banner.ok  {background:var(--green-bg);color:var(--green)}
+/* ── バナー ── */
+.banner{padding:16px;border-radius:10px;font-size:var(--font-label);font-weight:600;
+  line-height:1.6;white-space:pre-wrap;display:none}
+.banner.show{display:block}
+.banner.err {background:var(--red-bg);color:var(--red)}
+.banner.warn{background:var(--warn-bg);color:var(--warn)}
+.banner.ok  {background:var(--green-bg);color:var(--green)}
+.banner.info{background:var(--blue-lt);color:var(--blue-dk)}
 
-    /* ── スピナー ── */
-    .spinner{width:44px;height:44px;border:5px solid var(--border);
-      border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
-    @keyframes spin{to{transform:rotate(360deg)}}
+/* ── スピナー ── */
+.spinner{width:44px;height:44px;border:5px solid var(--border);
+  border-top-color:var(--blue);border-radius:50%;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
 
-    /* ════ S0: 接続設定 ════ */
-    #s-cfg{background:var(--blue);align-items:center;justify-content:center;padding:20px}
-    .cfg-card{background:#fff;border-radius:20px;padding:28px 24px;
-      width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;
-      box-shadow:0 8px 32px rgba(0,0,0,.2)}
-    .cfg-title{font-size:20px;font-weight:800;text-align:center}
-    .cfg-sub  {font-size:14px;color:var(--sub);text-align:center;line-height:1.6}
-    .cfg-field{display:flex;flex-direction:column;gap:5px}
-    .cfg-hint {font-size:12px;color:var(--sub);line-height:1.6;margin-top:4px}
-    .cfg-hint b{color:var(--blue)}
-    .cfg-divider{border:none;border-top:1px solid var(--border)}
+/* ════ S0: 接続設定 ════ */
+#s-cfg{background:var(--blue);align-items:center;justify-content:center;padding:20px}
+.cfg-card{background:#fff;border-radius:20px;padding:28px 24px;
+  width:100%;max-width:420px;display:flex;flex-direction:column;gap:18px;
+  box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.cfg-title{font-size:22px;font-weight:800;text-align:center}
+.cfg-sub  {font-size:15px;color:var(--sub);text-align:center;line-height:1.6}
+.cfg-field{display:flex;flex-direction:column;gap:6px}
+.cfg-hint {font-size:13px;color:var(--sub);line-height:1.6;margin-top:4px}
+.cfg-hint b{color:var(--blue)}
+.cfg-divider{border:none;border-top:1px solid var(--border)}
 
-    /* ════ S1: 社員番号 ════ */
-    #s-emp{background:var(--blue);align-items:center;justify-content:center;padding:20px}
-    .emp-card{background:#fff;border-radius:20px;padding:32px 24px;
-      width:100%;max-width:420px;display:flex;flex-direction:column;gap:20px;
-      box-shadow:0 8px 32px rgba(0,0,0,.2)}
-    .emp-icon {font-size:52px;text-align:center}
-    .emp-title{font-size:21px;font-weight:800;text-align:center}
-    .emp-sub  {font-size:15px;color:var(--sub);text-align:center;line-height:1.6}
-    #inp-emp  {text-align:center;font-size:34px;font-weight:800;letter-spacing:14px}
-    .emp-note {font-size:13px;color:var(--sub);text-align:center}
+/* ════ S1: 社員番号 ════ */
+#s-emp{background:var(--blue);align-items:center;justify-content:center;padding:20px}
+.emp-card{background:#fff;border-radius:20px;padding:32px 24px;
+  width:100%;max-width:420px;display:flex;flex-direction:column;gap:20px;
+  box-shadow:0 8px 32px rgba(0,0,0,.2)}
+.emp-icon {font-size:56px;text-align:center}
+.emp-title{font-size:23px;font-weight:800;text-align:center}
+.emp-sub  {font-size:16px;color:var(--sub);text-align:center;line-height:1.7}
+#inp-emp  {text-align:center;font-size:36px;font-weight:800;letter-spacing:14px}
+.emp-note {font-size:var(--font-small);color:var(--sub);text-align:center}
 
-    /* ════ S2: カメラ ════ */
-    #s-cam{background:#000}
-    #video-el{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
-    .cam-top{position:absolute;top:0;left:0;right:0;z-index:10;
-      display:flex;align-items:center;justify-content:space-between;
-      padding:52px 16px 12px;
-      background:linear-gradient(to bottom,rgba(0,0,0,.7),transparent)}
-    .emp-badge{display:flex;align-items:center;gap:6px;
-      background:rgba(255,255,255,.18);backdrop-filter:blur(4px);
-      border:1px solid rgba(255,255,255,.3);padding:6px 14px;border-radius:20px}
-    .badge-lbl{font-size:12px;color:rgba(255,255,255,.8)}
-    .badge-num{font-size:17px;font-weight:800;color:#fff;letter-spacing:3px}
-    .cam-top-btns{display:flex;gap:8px}
-    .cam-top-btn{background:rgba(255,255,255,.18);border:1px solid rgba(255,255,255,.35);
-      color:#fff;padding:7px 14px;border-radius:20px;font-size:13px;
-      font-weight:600;cursor:pointer}
-    .cam-top-btn.active{background:rgba(255,220,100,.6);color:#fff}
+/* ════ S2: カメラ ════ */
+#s-cam{background:#000}
+#video-el{position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.cam-top{position:absolute;top:0;left:0;right:0;z-index:10;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:52px 14px 14px;
+  background:linear-gradient(to bottom,rgba(0,0,0,.75),transparent)}
 
-    /* カメラガイドボックス */
-    .cam-overlay{position:absolute;inset:0;z-index:5;display:flex;
-      flex-direction:column;align-items:center;justify-content:center;pointer-events:none}
-    /* 横向き（デフォルト）*/
-    .guide-box{position:relative;border:2px dashed rgba(255,255,255,.55);border-radius:6px;
-      transition:all .3s}
-    .guide-box.landscape{width:min(84vw,440px);aspect-ratio:1.75}
-    /* 縦向き */
-    .guide-box.portrait {width:min(56vw,260px);aspect-ratio:0.58}
-    .cor{position:absolute;width:22px;height:22px;border-color:#fff;border-style:solid;border-width:0}
-    .cor.tl{top:-2px;left:-2px;border-top-width:3px;border-left-width:3px;border-radius:3px 0 0 0}
-    .cor.tr{top:-2px;right:-2px;border-top-width:3px;border-right-width:3px;border-radius:0 3px 0 0}
-    .cor.bl{bottom:-2px;left:-2px;border-bottom-width:3px;border-left-width:3px;border-radius:0 0 0 3px}
-    .cor.br{bottom:-2px;right:-2px;border-bottom-width:3px;border-right-width:3px;border-radius:0 0 3px 0}
-    .guide-txt{font-size:15px;font-weight:600;color:rgba(255,255,255,.9);
-      text-shadow:0 1px 4px rgba(0,0,0,.6);margin-top:14px;text-align:center}
+/* バッジ（タップで社員番号変更） */
+.emp-badge{display:flex;align-items:center;gap:6px;
+  background:rgba(255,255,255,.18);backdrop-filter:blur(4px);
+  border:1.5px solid rgba(255,255,255,.4);padding:8px 14px;border-radius:22px;
+  cursor:pointer;-webkit-appearance:none;flex-shrink:0}
+.badge-lbl{font-size:11px;color:rgba(255,255,255,.9);white-space:nowrap}
+.badge-num{font-size:18px;font-weight:800;color:#fff;letter-spacing:3px}
+.badge-edit{font-size:12px;color:rgba(255,255,255,.7);margin-left:2px}
+/* 会社名ラベル（バッジ下） */
+.cam-company-lbl{font-size:11px;color:rgba(255,255,255,.8);
+  text-shadow:0 1px 3px rgba(0,0,0,.7);padding-left:4px;
+  max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:none}
 
-    .cam-bot{position:absolute;bottom:0;left:0;right:0;z-index:10;
-      display:flex;flex-direction:column;align-items:center;
-      padding:14px 20px 44px;gap:14px;
-      background:linear-gradient(to top,rgba(0,0,0,.7),transparent)}
-    .cam-tip{font-size:14px;color:rgba(255,255,255,.8);text-align:center}
-    .shutter{width:76px;height:76px;border-radius:50%;
-      border:4px solid rgba(255,255,255,.9);background:rgba(255,255,255,.15);
-      cursor:pointer;position:relative;transition:transform .1s}
-    .shutter:active{transform:scale(.92)}
-    .shutter-dot{position:absolute;inset:6px;border-radius:50%;background:#fff;transition:background .15s}
-    .shutter:disabled .shutter-dot{background:rgba(255,255,255,.35)}
+.cam-top-btns{display:flex;gap:8px;flex-shrink:0}
+.cam-top-btn{background:rgba(255,255,255,.18);border:1.5px solid rgba(255,255,255,.35);
+  color:#fff;padding:8px 12px;border-radius:20px;font-size:13px;font-weight:700;cursor:pointer;
+  white-space:nowrap}
+.cam-top-btn.active{background:rgba(255,220,100,.55)}
 
-    /* 裏面撮影オーバーレイ */
-    #back-overlay{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.75);
-      display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px}
-    #back-overlay.show{display:flex}
-    .back-msg{color:#fff;font-size:18px;font-weight:700;text-align:center;line-height:1.6}
-    .back-btns{display:flex;flex-direction:column;gap:10px;width:100%;max-width:300px}
+/* カメラガイドボックス */
+.cam-overlay{position:absolute;inset:0;z-index:5;display:flex;
+  flex-direction:column;align-items:center;justify-content:center;pointer-events:none;
+  padding-top:100px;padding-bottom:140px}
+.guide-box{position:relative;border:2px dashed rgba(255,255,255,.6);border-radius:6px;transition:all .3s}
+.guide-box.landscape{width:min(84vw,440px);aspect-ratio:1.75}
+.guide-box.portrait {width:min(50vw,240px);aspect-ratio:0.58}
+.cor{position:absolute;width:22px;height:22px;border-color:#fff;border-style:solid;border-width:0}
+.cor.tl{top:-2px;left:-2px;border-top-width:3px;border-left-width:3px;border-radius:3px 0 0 0}
+.cor.tr{top:-2px;right:-2px;border-top-width:3px;border-right-width:3px;border-radius:0 3px 0 0}
+.cor.bl{bottom:-2px;left:-2px;border-bottom-width:3px;border-left-width:3px;border-radius:0 0 0 3px}
+.cor.br{bottom:-2px;right:-2px;border-bottom-width:3px;border-right-width:3px;border-radius:0 0 3px 0}
+.guide-txt{font-size:16px;font-weight:700;color:rgba(255,255,255,.95);
+  text-shadow:0 1px 4px rgba(0,0,0,.7);margin-top:14px;text-align:center}
 
-    /* ════ S3: 処理中 ════ */
-    #s-prog{background:#fff;align-items:center;justify-content:center;gap:22px}
-    .prog-txt{font-size:19px;font-weight:700}
-    .prog-sub{font-size:15px;color:var(--sub)}
-    .prog-steps{display:flex;flex-direction:column;gap:8px;margin-top:8px}
-    .prog-step{font-size:14px;color:var(--sub);display:flex;align-items:center;gap:8px}
-    .prog-step.done{color:var(--green)}
-    .prog-step.active{color:var(--blue);font-weight:700}
+.cam-bot{position:absolute;bottom:0;left:0;right:0;z-index:10;
+  display:flex;flex-direction:column;align-items:center;
+  padding:12px 20px 44px;gap:12px;
+  background:linear-gradient(to top,rgba(0,0,0,.75),transparent)}
+.cam-tip{font-size:15px;color:rgba(255,255,255,.85);text-align:center}
+.shutter{width:78px;height:78px;border-radius:50%;
+  border:4px solid rgba(255,255,255,.9);background:rgba(255,255,255,.15);
+  cursor:pointer;position:relative;transition:transform .1s}
+.shutter:active{transform:scale(.92)}
+.shutter-dot{position:absolute;inset:6px;border-radius:50%;background:#fff;transition:background .15s}
+.shutter:disabled .shutter-dot{background:rgba(255,255,255,.35)}
 
-    /* ════ S4: 確認・編集 ════ */
-    #s-rev{background:var(--bg)}
-    .rev-head{background:var(--blue);color:#fff;padding:52px 18px 18px}
-    .rev-head h1{font-size:20px;font-weight:800}
-    .rev-head p {font-size:14px;opacity:.85;margin-top:4px;line-height:1.5}
-    .rev-body{flex:1;padding:14px 14px 0;display:flex;flex-direction:column;gap:12px}
-    .thumb-row{display:flex;gap:8px}
-    .thumb{flex:1;max-height:120px;object-fit:contain;border-radius:10px;background:#eee}
-    .fields-card{background:#fff;border-radius:var(--radius);
-      box-shadow:0 1px 4px rgba(0,0,0,.1);overflow:hidden}
-    .f-row{display:flex;flex-direction:column;padding:11px 14px;
-      border-bottom:1px solid var(--border)}
-    .f-row:last-child{border-bottom:none}
-    .f-row.filled .inp{border-color:#aacbff;background:#f0f6ff}
-    .req{display:inline-flex;font-size:10px;font-weight:700;
-      background:var(--red);color:#fff;padding:1px 5px;border-radius:3px;margin-left:4px}
-    .memo-card{background:#fff;border-radius:var(--radius);padding:14px;
-      box-shadow:0 1px 4px rgba(0,0,0,.1)}
-    textarea.inp{resize:none;line-height:1.6}
-    .rev-foot{padding:14px;display:flex;flex-direction:column;gap:10px;
-      border-top:1px solid var(--border);background:var(--bg)}
+/* 裏面撮影オーバーレイ */
+#back-overlay{position:absolute;inset:0;z-index:20;background:rgba(0,0,0,.8);
+  display:none;flex-direction:column;align-items:center;justify-content:center;gap:20px;padding:28px}
+#back-overlay.show{display:flex}
+.back-msg{color:#fff;font-size:20px;font-weight:700;text-align:center;line-height:1.7}
+.back-btns{display:flex;flex-direction:column;gap:12px;width:100%;max-width:320px}
 
-    /* ════ S5: 完了 ════ */
-    #s-done{background:#fff;align-items:center;justify-content:center}
-    .done-inner{display:flex;flex-direction:column;align-items:center;
-      gap:16px;padding:40px 28px;max-width:420px;width:100%}
-    .done-icon {font-size:80px;line-height:1}
-    .done-title{font-size:24px;font-weight:800;text-align:center}
-    .done-msg  {font-size:16px;color:var(--sub);text-align:center;line-height:1.7;white-space:pre-wrap}
-    .done-inner .btn{margin-top:4px}
-    .session-info{font-size:13px;color:var(--sub);text-align:center}
+/* ════ S3: 処理中 ════ */
+#s-prog{background:#fff;align-items:center;justify-content:center;gap:22px}
+.prog-txt{font-size:20px;font-weight:700;text-align:center}
+.prog-sub{font-size:16px;color:var(--sub)}
 
-    #work-canvas{display:none}
-  </style>
+/* ════ S4: 確認・編集 ════ */
+#s-rev{background:var(--bg)}
+.rev-head{background:var(--blue);color:#fff;padding:52px 18px 18px}
+.rev-head h1{font-size:22px;font-weight:800}
+.rev-head p {font-size:15px;opacity:.9;margin-top:6px;line-height:1.6}
+.rev-body{flex:1;padding:14px 14px 0;display:flex;flex-direction:column;gap:14px}
+.thumb-row{display:flex;gap:8px}
+.thumb{flex:1;max-height:110px;object-fit:contain;border-radius:10px;background:#eee}
+
+/* セクション（60歳以上対応） */
+.section-card{background:#fff;border-radius:var(--radius);box-shadow:0 1px 4px rgba(0,0,0,.1);overflow:hidden}
+.section-hd{padding:12px 16px;background:var(--blue-lt);border-bottom:1px solid #c5d8f7;
+  font-size:var(--font-label);font-weight:800;color:var(--blue-dk)}
+.f-row{display:flex;flex-direction:column;padding:12px 16px;border-bottom:1px solid var(--border)}
+.f-row:last-child{border-bottom:none}
+.f-row.filled .inp{border-color:#aacbff;background:#f0f6ff}
+.f-row .lbl-icon{font-size:16px;margin-right:4px}
+.req{display:inline-flex;font-size:11px;font-weight:700;
+  background:var(--red);color:#fff;padding:2px 6px;border-radius:3px;margin-left:5px}
+
+/* 公開設定 */
+.vis-group{display:flex;gap:10px;margin-top:8px}
+.vis-btn{flex:1;padding:14px 8px;border:2.5px solid var(--border);border-radius:10px;
+  background:#fff;cursor:pointer;text-align:center;transition:all .15s}
+.vis-btn.active.public {border-color:var(--green);background:var(--green-bg)}
+.vis-btn.active.private{border-color:var(--blue);background:var(--blue-lt)}
+.vis-icon{font-size:22px;display:block;margin-bottom:4px}
+.vis-label{font-size:14px;font-weight:700;display:block}
+.vis-desc{font-size:12px;color:var(--sub);display:block;margin-top:2px}
+
+.memo-card{background:#fff;border-radius:var(--radius);padding:16px;
+  box-shadow:0 1px 4px rgba(0,0,0,.1)}
+textarea.inp{resize:none;line-height:1.7}
+.rev-foot{padding:14px;display:flex;flex-direction:column;gap:10px;
+  border-top:1px solid var(--border);background:var(--bg)}
+
+/* 重複警告 */
+.dup-banner{background:#fff8e1;border:2px solid #ffb300;border-radius:10px;
+  padding:14px 16px;font-size:var(--font-label);line-height:1.7;display:none}
+.dup-banner.show{display:block}
+.dup-banner strong{color:#e65100}
+
+/* ════ S5: 完了 ════ */
+#s-done{background:#fff;align-items:center;justify-content:center}
+.done-inner{display:flex;flex-direction:column;align-items:center;
+  gap:14px;padding:36px 24px;max-width:420px;width:100%}
+.done-icon {font-size:80px;line-height:1}
+.done-title{font-size:26px;font-weight:800;text-align:center}
+.done-msg  {font-size:17px;color:var(--sub);text-align:center;line-height:1.7;white-space:pre-wrap}
+.session-info{font-size:var(--font-small);color:var(--sub);text-align:center}
+.done-inner .btn{margin-top:4px}
+
+/* 送信カード */
+.send-card{background:#f0f6ff;border:2px solid #aacbff;border-radius:var(--radius);
+  padding:16px;width:100%;margin-top:4px}
+.send-ttl{font-size:var(--font-label);font-weight:800;color:var(--blue-dk);margin-bottom:12px}
+.send-row{display:flex;gap:8px;align-items:stretch}
+.send-sel{flex:1;padding:12px;font-size:15px;border:2px solid var(--border);
+  border-radius:8px;background:#fff;-webkit-appearance:none;min-height:50px}
+.btn-mail{padding:12px 16px;background:var(--blue);color:#fff;border:none;
+  border-radius:8px;font-size:20px;cursor:pointer;min-height:50px;display:flex;align-items:center}
+.btn-link-sm{background:none;border:none;color:var(--blue);font-size:var(--font-small);
+  font-weight:700;cursor:pointer;padding:8px 0;display:block;text-align:left}
+.send-email-box{display:flex;flex-direction:column;gap:8px;margin-top:8px}
+.btn-add-email{padding:11px 16px;background:var(--green);color:#fff;border:none;
+  border-radius:8px;font-size:var(--font-label);font-weight:700;cursor:pointer;white-space:nowrap}
+.send-div{height:1px;background:#aacbff;margin:12px 0}
+.btn-teams{width:100%;padding:13px;background:var(--purple);color:#fff;border:none;
+  border-radius:8px;font-size:16px;font-weight:700;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-csv{width:100%;padding:11px;background:#188038;color:#fff;border:none;
+  border-radius:8px;font-size:var(--font-small);font-weight:700;cursor:pointer;margin-top:8px;
+  display:flex;align-items:center;justify-content:center;gap:6px}
+
+/* ════ S6: 履歴 ════ */
+#s-hist{background:var(--bg)}
+.hist-head{background:var(--blue);color:#fff;padding:52px 18px 16px;
+  display:flex;align-items:center;gap:12px}
+.hist-head h1{font-size:20px;font-weight:800;flex:1}
+.hist-back{background:none;border:1.5px solid rgba(255,255,255,.6);color:#fff;
+  padding:8px 16px;border-radius:18px;font-size:var(--font-small);font-weight:700;cursor:pointer}
+.hist-body{flex:1;padding:14px;display:flex;flex-direction:column;gap:12px;overflow-y:auto}
+.hist-empty{text-align:center;color:var(--sub);padding:60px 20px;font-size:17px;line-height:1.8}
+.hist-item{background:#fff;border-radius:var(--radius);padding:14px 16px;
+  box-shadow:0 1px 4px rgba(0,0,0,.1);border-left:4px solid var(--blue)}
+.hist-item.teams{border-left-color:var(--purple)}
+.hist-type{display:inline-flex;align-items:center;gap:4px;font-size:12px;font-weight:700;
+  padding:2px 8px;border-radius:10px;margin-bottom:8px}
+.hist-type.email{background:#e8f0fe;color:var(--blue)}
+.hist-type.teams{background:#ede9f7;color:var(--purple)}
+.hist-company{font-size:17px;font-weight:800;color:var(--text)}
+.hist-person{font-size:var(--font-label);color:var(--text);margin-top:3px}
+.hist-affil{font-size:var(--font-small);color:var(--sub);margin-top:2px}
+.hist-time{font-size:12px;color:var(--sub);margin-top:6px}
+.hist-recip{font-size:12px;color:var(--sub)}
+.hist-clear-btn{background:none;border:none;color:var(--red);font-size:var(--font-small);
+  font-weight:600;cursor:pointer;padding:6px;text-align:center}
+
+#work-canvas{display:none}
+
+/* トースト */
+#_toast{position:fixed;bottom:110px;left:50%;transform:translateX(-50%);
+  background:rgba(0,0,0,.78);color:#fff;padding:12px 22px;border-radius:22px;
+  font-size:15px;font-weight:600;z-index:9999;max-width:85vw;text-align:center;
+  line-height:1.5;transition:opacity .3s;opacity:0;pointer-events:none}
+</style>
 </head>
 <body>
 
-<!-- ══════════════════════════════════
-     S0: 接続設定
-══════════════════════════════════ -->
+<!-- ══ S0: 接続設定 ══ -->
 <div id="s-cfg" class="screen">
   <div class="cfg-card">
-    <div style="font-size:48px;text-align:center">🪪</div>
-    <h1 class="cfg-title">名刺書き出し君<br>接続設定</h1>
-    <p class="cfg-sub">最初に1回だけ設定します<br>次回以降は自動で起動します</p>
+    <div style="font-size:52px;text-align:center">🪪</div>
+    <h1 class="cfg-title">名刺書き出し君</h1>
+    <p class="cfg-sub">GASのURLと合言葉を入力してください<br>子会社・他社ごとに異なるURLを設定できます</p>
 
     <div class="cfg-field">
-      <label class="lbl">GASのURL</label>
-      <input id="cfg-url" class="inp" type="url"
-        placeholder="https://script.google.com/macros/s/…/exec"
-        autocomplete="off" spellcheck="false">
-      <p class="cfg-hint">
-        <b>確認方法：</b>GASエディタ →「デプロイ」→「デプロイを管理」<br>
-        →「ウェブアプリ」のURLを貼り付け（<b>/exec</b>で終わるもの）
-      </p>
+      <label class="lbl">🔗 GASのURL</label>
+      <input id="cfg-url" class="inp" type="url" placeholder="https://script.google.com/macros/s/…/exec" autocomplete="off">
+      <p class="cfg-hint"><b>確認方法：</b>GASエディタ → デプロイ → デプロイを管理 →「ウェブアプリ」のURL（<b>/exec</b>で終わるもの）</p>
     </div>
 
     <div class="cfg-field">
-      <label class="lbl">合言葉（APIシークレット）</label>
+      <label class="lbl">🔑 合言葉（APIシークレット）</label>
       <div class="inp-wrap">
-        <input id="cfg-secret" class="inp" type="password"
-          placeholder="GASに設定した合言葉" autocomplete="new-password">
+        <input id="cfg-secret" class="inp" type="password" placeholder="GASに設定した合言葉" autocomplete="new-password">
         <button class="eye-btn" onclick="toggleEye('cfg-secret',this)">👁</button>
       </div>
-      <p class="cfg-hint"><b>GASの</b> CONFIG → API_SECRET に書いた文字列</p>
     </div>
 
+    <!-- v2.3: 書き出し先シート指定を廃止 -->
+    <div style="background:#fef7e0;border:1.5px solid #ffb300;border-radius:10px;padding:12px;font-size:13px;color:#7a5000;line-height:1.6">
+      📋 <strong>v2.3から：</strong>書き出し先シートは廃止しました。全データは1つのシートに登録されます。登録時に「全員公開/自分のみ」を選べます。
+    </div>
+
+    <!-- 送信先メールアドレス管理 -->
     <div class="cfg-field">
-      <label class="lbl">書き出し先シート名（省略可）</label>
-      <input id="cfg-sheet" class="inp" type="text"
-        placeholder="例：役員用名刺データ（空白=デフォルト）">
-      <p class="cfg-hint">
-        空白のままにすると「名刺データ」シートに書き出されます<br>
-        役員など個別シートに保存したい場合はシート名を指定
-      </p>
+      <label class="lbl">📧 送信先メールアドレス（最大5件）</label>
+      <div id="cfg-email-list"></div>
+      <button class="btn btn-gray btn-sm" style="margin-top:8px" onclick="Cfg.toggleEmailBox()">＋ アドレスを追加</button>
+      <div id="cfg-email-box" style="display:none;margin-top:8px;display:flex;flex-direction:column;gap:6px">
+        <input id="cfg-email-inp" type="email" class="inp" placeholder="例：tanaka@company.co.jp" style="font-size:16px">
+        <button class="btn btn-green btn-sm" onclick="Cfg.addEmail()">追加</button>
+      </div>
     </div>
 
     <div id="cfg-banner" class="banner"></div>
-
-    <button class="btn btn-gray btn-sm" onclick="Cfg.test()">
-      🔗 接続テスト（任意）
-    </button>
+    <button class="btn btn-gray btn-sm" onclick="Cfg.test()">🔗 接続テスト（任意）</button>
     <hr class="cfg-divider">
-    <button class="btn btn-blue" onclick="Cfg.save()">
-      設定を保存して始める →
-    </button>
+    <button class="btn btn-blue" onclick="Cfg.save()">設定を保存して始める →</button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     S1: 社員番号
-══════════════════════════════════ -->
+<!-- ══ S1: 社員番号 ══ -->
 <div id="s-emp" class="screen">
   <div class="emp-card">
     <div class="emp-icon">👤</div>
@@ -249,86 +319,110 @@
     <p class="emp-sub">あなたの4桁の社員番号を入力してください<br>次回以降は自動で入力されます</p>
     <div>
       <label class="lbl" for="inp-emp">4桁の社員番号</label>
-      <input id="inp-emp" class="inp" type="text" inputmode="numeric"
-        maxlength="4" pattern="\d{4}" placeholder="例：0007" autocomplete="off">
+      <input id="inp-emp" class="inp" type="text" inputmode="numeric" maxlength="4" pattern="\d{4}" placeholder="例：0007" autocomplete="off">
       <p id="emp-err" class="err"></p>
     </div>
-    <button class="btn btn-blue" onclick="Emp.save()">撮影を始める →</button>
-    <p class="emp-note">※ 変更はカメラ画面の「変更」から</p>
+    <button class="btn btn-blue" onclick="Emp.save()">✅ 撮影を始める</button>
+    <p class="emp-note">※ 変更はカメラ画面の社員番号バッジをタップ</p>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     S2: カメラ
-══════════════════════════════════ -->
+<!-- ══ S2: カメラ ══ -->
 <div id="s-cam" class="screen">
   <video id="video-el" autoplay playsinline muted></video>
 
   <div class="cam-top">
-    <div class="emp-badge">
-      <span class="badge-lbl">社員番号</span>
-      <span id="cam-emp" class="badge-num">----</span>
+    <!-- 社員番号バッジ＋会社名（タップで変更） -->
+    <div style="display:flex;flex-direction:column;align-items:flex-start;gap:3px;flex-shrink:0">
+      <button class="emp-badge" onclick="Emp.change()" aria-label="社員番号を変更">
+        <span class="badge-lbl">社員番号</span>
+        <span id="cam-emp" class="badge-num">----</span>
+        <span class="badge-edit">✏️</span>
+      </button>
+      <span id="cam-company" class="cam-company-lbl"></span>
     </div>
     <div class="cam-top-btns">
-      <button class="cam-top-btn" onclick="Emp.change()">変更</button>
       <button id="orient-btn" class="cam-top-btn" onclick="Camera.toggleOrientation()">↕ 縦型</button>
+      <button class="cam-top-btn" onclick="History.open()">📋 履歴</button>
       <button class="cam-top-btn" onclick="Cfg.open()">⚙️</button>
     </div>
   </div>
 
   <!-- ガイドボックス -->
-  <div class="cam-overlay">
+  <div id="cam-overlay" class="cam-overlay">
     <div id="guide-box" class="guide-box landscape">
       <div class="cor tl"></div><div class="cor tr"></div>
       <div class="cor bl"></div><div class="cor br"></div>
     </div>
-    <p id="guide-txt" class="guide-txt">名刺を枠の中に入れてください</p>
+    <p id="guide-txt" class="guide-txt">名刺を枠の中に合わせてください</p>
   </div>
 
   <!-- 裏面撮影確認オーバーレイ -->
   <div id="back-overlay">
-    <p class="back-msg">表面を撮影しました。<br>裏面もありますか？</p>
+    <p class="back-msg">表面を撮影しました。<br>名刺の裏面もありますか？</p>
     <div class="back-btns">
       <button class="btn btn-blue" onclick="Capture.shootBack()">📷 裏面も撮影する</button>
-      <button class="btn btn-gray" onclick="Capture.proceedOCR()">→ 表面のみで続ける</button>
+      <button class="btn btn-gray" onclick="Capture.proceedOCR()">→ 表面だけで続ける</button>
     </div>
   </div>
 
   <div class="cam-bot">
-    <p id="cam-tip" class="cam-tip">💡 明るい場所で手ブレなく撮影してください</p>
+    <p id="cam-tip" class="cam-tip">💡 明るい場所で、ブレないように撮影してください</p>
     <button id="shutter" class="shutter" disabled onclick="Capture.shoot()">
       <span class="shutter-dot"></span>
     </button>
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     S3: 処理中
-══════════════════════════════════ -->
+<!-- ══ S3: 処理中 ══ -->
 <div id="s-prog" class="screen">
   <div class="spinner"></div>
   <p id="prog-txt" class="prog-txt">読み取り中…</p>
   <p class="prog-sub">そのままお待ちください</p>
 </div>
 
-<!-- ══════════════════════════════════
-     S4: 確認・編集
-══════════════════════════════════ -->
+<!-- ══ S4: 確認・編集 ══ -->
 <div id="s-rev" class="screen">
   <div class="rev-head">
-    <h1>内容を確認してください</h1>
-    <p>自動で読み取りました。違う場合はタップして修正できます</p>
+    <h1>📋 内容を確認してください</h1>
+    <p>自動で読み取りました。間違いがあればタップして修正できます</p>
   </div>
   <div class="rev-body">
     <div id="rev-banner" class="banner"></div>
+    <div id="dup-banner" class="dup-banner"></div>
     <div class="thumb-row">
       <img id="thumb"      class="thumb" alt="表面">
       <img id="thumb-back" class="thumb" alt="裏面" style="display:none">
     </div>
-    <div id="fields-card" class="fields-card"></div>
+    <!-- フィールドはReview.build()で動的生成 -->
+    <div id="fields-wrap"></div>
+
+    <!-- 公開設定 -->
+    <div class="section-card">
+      <div class="section-hd">🔒 公開設定</div>
+      <div style="padding:14px 16px">
+        <p style="font-size:var(--font-small);color:var(--sub);margin-bottom:10px;line-height:1.6">
+          この名刺データを誰が見られるか設定します
+        </p>
+        <div class="vis-group">
+          <button id="vis-public" class="vis-btn active public" onclick="Review.setVisibility('public')">
+            <span class="vis-icon">👥</span>
+            <span class="vis-label">全員に公開</span>
+            <span class="vis-desc">全社員が見られます</span>
+          </button>
+          <button id="vis-private" class="vis-btn private" onclick="Review.setVisibility('private')">
+            <span class="vis-icon">🔒</span>
+            <span class="vis-label">非公開</span>
+            <span class="vis-desc">自分と管理者のみ</span>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <!-- 備考 -->
     <div class="memo-card">
-      <label class="lbl" for="memo">備考（任意）</label>
-      <textarea id="memo" class="inp" rows="3" placeholder="展示会で取得、紹介など"></textarea>
+      <label class="lbl" for="memo">💬 メモ（任意）</label>
+      <textarea id="memo" class="inp" rows="3" placeholder="例：展示会で取得、紹介、商談中 など"></textarea>
     </div>
   </div>
   <div class="rev-foot">
@@ -337,219 +431,314 @@
   </div>
 </div>
 
-<!-- ══════════════════════════════════
-     S5: 完了
-══════════════════════════════════ -->
+<!-- ══ S5: 完了 ══ -->
 <div id="s-done" class="screen">
   <div class="done-inner">
     <div id="done-icon"  class="done-icon"></div>
     <h2 id="done-title" class="done-title"></h2>
     <p  id="done-msg"   class="done-msg"></p>
-    <p  id="session-info" class="session-info"></p>
-    <button class="btn btn-blue"    onclick="Capture.next()">続けて撮影する</button>
-    <button id="export-btn" class="btn btn-orange btn-sm"
-      style="display:none" onclick="Session.exportTxt()">📄 TXTで一括出力</button>
-    <button id="retry-btn"  class="btn btn-outline btn-sm"
-      style="display:none" onclick="Save.run()">再送信する</button>
+
+    <!-- 送信セクション（登録成功時のみ表示） -->
+    <div id="send-section" class="send-card" style="display:none">
+      <p class="send-ttl">📤 メール / Teams で共有</p>
+      <div class="send-row">
+        <select id="send-email-sel" class="send-sel">
+          <option value="">送信先を選択...</option>
+        </select>
+        <button class="btn-mail" onclick="Send.openMail()" title="メールで送信">📧</button>
+      </div>
+      <button class="btn-link-sm" onclick="Send.toggleAddEmail()">＋ 新しいアドレスを追加</button>
+      <div id="send-add-box" class="send-email-box" style="display:none">
+        <input id="send-email-inp" type="email" class="inp" placeholder="メールアドレスを入力" style="font-size:16px;min-height:50px">
+        <button class="btn-add-email" onclick="Send.addEmail()">追加して選択</button>
+      </div>
+      <div class="send-div"></div>
+      <button class="btn-teams" onclick="Send.copyForTeams()">💬 テキストをコピーしてTeamsで共有</button>
+      <button class="btn-csv" onclick="Send.copyCSV()">📊 Excelに貼り付け用CSVコピー</button>
+    </div>
+
+    <p id="session-info" class="session-info"></p>
+    <button class="btn btn-blue"    onclick="Capture.next()">📷 続けて撮影する</button>
+    <button id="retry-btn" class="btn btn-outline btn-sm" style="display:none" onclick="Save.run()">🔄 再送信する</button>
   </div>
+</div>
+
+<!-- ══ S6: 送信履歴 ══ -->
+<div id="s-hist" class="screen">
+  <div class="hist-head">
+    <h1>📋 送信履歴（7日間）</h1>
+    <button class="hist-back" onclick="Camera.open()">← 戻る</button>
+  </div>
+  <div id="hist-body" class="hist-body"></div>
 </div>
 
 <canvas id="work-canvas"></canvas>
 
+<div id="_toast"></div>
+
 <script>
 'use strict';
 
-// ════════════════════════════════════════════
-// フィールド定義（英語名追加）
-// ════════════════════════════════════════════
-const FIELDS = [
-  {key:'companyName', label:'会社名',         req:true },
-  {key:'department',  label:'部署名',         req:false},
-  {key:'position',    label:'役職',           req:false},
-  {key:'fullName',    label:'氏名',           req:true },
-  {key:'fullNameEn',  label:'氏名（英語）',   req:false},
-  {key:'furigana',    label:'フリガナ',       req:false},
-  {key:'officePhone', label:'電話（オフィス）',req:false},
-  {key:'mobilePhone', label:'携帯電話番号',   req:false},
-  {key:'fax',         label:'FAX',            req:false},
-  {key:'email',       label:'メールアドレス', req:false},
-  {key:'postalCode',  label:'郵便番号',       req:false},
-  {key:'address',     label:'住所',           req:false},
-  {key:'website',     label:'WebサイトURL',   req:false},
+// ════════════════════════════════════════
+// フィールド定義 v2.3
+// ════════════════════════════════════════
+const FIELDS_SECTIONS = [
+  {
+    title: '🏢 会社情報',
+    fields: [
+      {key:'companyName',   label:'会社名',         icon:'🏢', req:true },
+      {key:'companyNameEn', label:'会社名（英語）',  icon:'🌐', req:false},
+    ],
+  },
+  {
+    title: '🗂️ 所属（本部・部・課など）',
+    fields: [
+      {key:'affiliation1',  label:'所属 1（本部・事業部など）', icon:'📁', req:false},
+      {key:'affiliation2',  label:'所属 2（部・課など）',       icon:'📂', req:false},
+      {key:'affiliation3',  label:'所属 3（チーム・グループなど）', icon:'📄', req:false},
+    ],
+  },
+  {
+    title: '👤 担当者',
+    fields: [
+      {key:'position',    label:'役職',           icon:'🎖️', req:false},
+      {key:'fullName',    label:'氏名（漢字）',   icon:'✍️', req:true },
+      {key:'fullNameEn',  label:'氏名（英語）',   icon:'🔤', req:false},
+      {key:'furigana',    label:'フリガナ',       icon:'🔡', req:false},
+    ],
+  },
+  {
+    title: '📞 連絡先',
+    fields: [
+      {key:'officePhone', label:'電話番号（会社）', icon:'📞', req:false},
+      {key:'mobilePhone', label:'携帯電話番号',     icon:'📱', req:false},
+      {key:'fax',         label:'FAX',             icon:'📠', req:false},
+      {key:'email',       label:'メールアドレス',  icon:'✉️', req:false},
+    ],
+  },
+  {
+    title: '📍 住所・ウェブ',
+    fields: [
+      {key:'postalCode', label:'郵便番号',    icon:'📮', req:false},
+      {key:'address',    label:'住所',       icon:'📍', req:false},
+      {key:'website',    label:'ウェブサイト', icon:'🌐', req:false},
+    ],
+  },
 ];
 
-// ════════════════════════════════════════════
+// 全フィールドのフラット配列（Save用）
+const ALL_FIELDS = FIELDS_SECTIONS.flatMap(s => s.fields);
+
+// ════════════════════════════════════════
 // セッション状態
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 const ST = {
   empId:'', base64Front:null, base64Back:null, reqId:'', ts:'',
-  originalExtracted: null,  // OCRが抽出した元データ（学習用）
-  ocrHint: '',              // OCR原文の一部（学習用）
+  originalExtracted: null,
+  ocrHint: '',
+  visibility: 'public',
 };
-let camStream    = null;
-let isPortrait   = false;  // カメラ縦型モード
+let camStream  = null;
+let isPortrait = false;
 
-// ════════════════════════════════════════════
-// セッション蓄積（一括TXTエクスポート用）
-// ════════════════════════════════════════════
-const Session = {
-  cards: [],
-  add(data, memo) {
-    this.cards.push({ ...data, memo, ts: new Date().toLocaleString('ja-JP') });
-    this.updateUI();
-  },
-  updateUI() {
-    const n = this.cards.length;
-    const si = document.getElementById('session-info');
-    const eb = document.getElementById('export-btn');
-    if (si) si.textContent = 'このセッション: ' + n + '枚スキャン済み';
-    if (eb) eb.style.display = n > 0 ? 'flex' : 'none';
-  },
-  exportTxt() {
-    if (!this.cards.length) { alert('スキャンデータがありません'); return; }
-    let txt = '=== 名刺書き出し君 エクスポート ===\n';
-    txt += '出力日時: ' + new Date().toLocaleString('ja-JP') + '\n';
-    txt += '社員番号: ' + ST.empId + '\n';
-    txt += '件数: ' + this.cards.length + '件\n';
-    txt += '='.repeat(36) + '\n\n';
-    this.cards.forEach((card, i) => {
-      txt += '--- ' + (i+1) + '件目 ---\n';
-      txt += '撮影日時: ' + card.ts + '\n';
-      FIELDS.forEach(f => {
-        if (card[f.key]) txt += f.label + ': ' + card[f.key] + '\n';
-      });
-      if (card.memo) txt += '備考: ' + card.memo + '\n';
-      txt += '\n';
-    });
-    const blob = new Blob([txt], {type:'text/plain;charset=utf-8'});
-    const a    = document.createElement('a');
-    a.href     = URL.createObjectURL(blob);
-    a.download = 'meishi_' + new Date().toISOString().slice(0,10) + '.txt';
-    a.click();
-    URL.revokeObjectURL(a.href);
-  },
-};
-
-// ════════════════════════════════════════════
-// 画面管理
-// ════════════════════════════════════════════
-function show(id) {
-  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
-  document.getElementById(id).classList.add('active');
-  window.scrollTo(0,0);
-}
-
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 // ローカルストレージ
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 const LS = {
-  get: k       => localStorage.getItem(k) || '',
-  set: (k,v)   => localStorage.setItem(k, v),
+  get:  k      => localStorage.getItem(k)  || '',
+  set:  (k,v)  => localStorage.setItem(k, v),
+  del:  k      => localStorage.removeItem(k),
   gasUrl:      () => LS.get('meishi_gas_url'),
   secret:      () => LS.get('meishi_secret'),
   empId:       () => LS.get('meishi_emp'),
-  targetSheet: () => LS.get('meishi_target_sheet'),
+  companyName: () => LS.get('meishi_company_name'),  // v2.4: 多拠点対応
 };
 
-// ════════════════════════════════════════════
-// API通信（Content-Type: text/plain → CORSエラー回避）
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
+// メールアドレス管理（最大5件）
+// ════════════════════════════════════════
+const EmailMgr = {
+  MAX: 5,
+  getAll() { try { return JSON.parse(LS.get('meishi_emails') || '[]'); } catch { return []; } },
+  getDefault() { return LS.get('meishi_email_default') || ''; },
+  setDefault(e) { LS.set('meishi_email_default', e); },
+  save(list)   { LS.set('meishi_emails', JSON.stringify(list)); },
+  add(email) {
+    if (!email) return;
+    let list = this.getAll().filter(e => e !== email);
+    list.unshift(email);
+    if (list.length > this.MAX) list = list.slice(0, this.MAX);
+    this.save(list);
+    this.setDefault(email);
+  },
+  remove(email) {
+    const list = this.getAll().filter(e => e !== email);
+    this.save(list);
+    if (this.getDefault() === email) this.setDefault(list[0] || '');
+  },
+};
+
+// ════════════════════════════════════════
+// 送信履歴管理（7日間）
+// ════════════════════════════════════════
+const HistoryMgr = {
+  KEY:  'meishi_send_hist',
+  DAYS: 7,
+  getAll() { try { return JSON.parse(LS.get(this.KEY) || '[]'); } catch { return []; } },
+  save(items) { LS.set(this.KEY, JSON.stringify(items)); },
+  add(item) {
+    let items = this.getAll();
+    items.unshift({ ...item, id: Date.now() + '_' + Math.random().toString(36).slice(2,5), sendTime: new Date().toISOString() });
+    const cutoff = Date.now() - this.DAYS * 86400000;
+    items = items.filter(i => new Date(i.sendTime).getTime() > cutoff);
+    if (items.length > 200) items = items.slice(0, 200);
+    this.save(items);
+  },
+  purge() {
+    const cutoff = Date.now() - this.DAYS * 86400000;
+    const items  = this.getAll().filter(i => new Date(i.sendTime).getTime() > cutoff);
+    this.save(items);
+    return items;
+  },
+  clear() { this.save([]); },
+};
+
+// ════════════════════════════════════════
+// API通信（CORS回避: text/plain）
+// ════════════════════════════════════════
 const Api = {
   async post(data) {
     const url = LS.gasUrl();
     if (!url) throw new Error('GAS URLが設定されていません（⚙️から設定してください）');
-
     let res;
     try {
-      // ⚠️ GASはapplication/jsonだとPreflightが発生しCORSエラーになる
-      // text/plainにすることでSimple Requestになりpreflightなしで通信できる
       res = await fetch(url, {
-        method:  'POST',
-        headers: {'Content-Type':'text/plain;charset=UTF-8'},
-        body:    JSON.stringify({...data, secret: LS.secret()}),
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify({ ...data, secret: LS.secret() }),
       });
     } catch (err) {
-      throw new Error(
-        'GASに接続できませんでした。\n' +
-        '・URLが正しいか確認してください\n' +
-        '・デプロイのアクセス設定が「全員」になっているか確認してください\n' +
-        '（技術詳細: ' + err.message + '）'
-      );
+      throw new Error('GASに接続できませんでした。\n・URLが正しいか確認してください\n・デプロイの「アクセスできるユーザー」が「全員」か確認してください\n（詳細: ' + err.message + '）');
     }
-
     if (!res.ok) throw new Error('サーバーエラー（HTTP ' + res.status + '）');
-
     let json;
-    try { json = await res.json(); }
-    catch(_) { throw new Error('GASからの返答が読めませんでした'); }
-
+    try { json = await res.json(); } catch { throw new Error('GASからの返答が読めませんでした'); }
     return json;
   },
 };
 
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
+// 画面遷移
+// ════════════════════════════════════════
+function show(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+  window.scrollTo(0, 0);
+}
+
+// ════════════════════════════════════════
 // S0: 接続設定
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 const Cfg = {
   open() {
     document.getElementById('cfg-url').value    = LS.gasUrl();
     document.getElementById('cfg-secret').value = LS.secret();
-    document.getElementById('cfg-sheet').value  = LS.targetSheet();
     _hideBanner('cfg-banner');
+    this.refreshEmailList();
     Camera.stop();
     show('s-cfg');
   },
 
+  refreshEmailList() {
+    const wrap = document.getElementById('cfg-email-list');
+    if (!wrap) return;
+    const emails = EmailMgr.getAll();
+    const def    = EmailMgr.getDefault();
+    if (!emails.length) {
+      wrap.innerHTML = '<p style="font-size:13px;color:var(--sub);padding:4px 0">まだ登録されていません</p>';
+      return;
+    }
+    wrap.innerHTML = emails.map(e => `
+      <div style="display:flex;align-items:center;gap:8px;padding:8px 10px;background:#fff;border:1.5px solid ${e===def?'var(--blue)':'var(--border)'};border-radius:8px;font-size:14px;margin-top:6px">
+        <span style="flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${e===def?'⭐ ':''}${e}</span>
+        ${e !== def ? `<button onclick="Cfg.setDefault('${e}')" style="background:none;border:1px solid var(--blue);color:var(--blue);border-radius:4px;font-size:12px;padding:2px 8px;cursor:pointer">デフォルト</button>` : ''}
+        <button onclick="Cfg.removeEmail('${e}')" style="background:none;border:none;color:var(--red);font-size:18px;cursor:pointer;line-height:1">✕</button>
+      </div>`).join('');
+  },
+
+  toggleEmailBox() {
+    const box = document.getElementById('cfg-email-box');
+    const open = box.style.display === 'none' || box.style.display === '';
+    box.style.display = open ? 'flex' : 'none';
+    if (open) document.getElementById('cfg-email-inp').focus();
+  },
+
+  addEmail() {
+    const inp   = document.getElementById('cfg-email-inp');
+    const email = inp.value.trim();
+    if (!email || !email.includes('@')) { _showBanner('cfg-banner', 'err', '有効なメールアドレスを入力してください'); return; }
+    EmailMgr.add(email);
+    inp.value = '';
+    document.getElementById('cfg-email-box').style.display = 'none';
+    this.refreshEmailList();
+    _showBanner('cfg-banner', 'ok', '✅ メールアドレスを追加しました');
+  },
+
+  setDefault(email) { EmailMgr.setDefault(email); this.refreshEmailList(); },
+  removeEmail(email) { EmailMgr.remove(email); this.refreshEmailList(); },
+
   async test() {
     const url    = document.getElementById('cfg-url').value.trim();
     const secret = document.getElementById('cfg-secret').value.trim();
-
-    if (!url)    return _showBanner('cfg-banner','err','URLを入力してください');
-    if (!secret) return _showBanner('cfg-banner','err','合言葉を入力してください');
-    if (!url.includes('script.google.com'))
-      return _showBanner('cfg-banner','err','URLがGASのURLではないようです');
-
-    _showBanner('cfg-banner','warn','接続テスト中…');
-
+    if (!url)    return _showBanner('cfg-banner', 'err', 'URLを入力してください');
+    if (!secret) return _showBanner('cfg-banner', 'err', '合言葉を入力してください');
+    if (!url.includes('script.google.com')) return _showBanner('cfg-banner', 'err', 'URLがGASのURLではないようです');
+    _showBanner('cfg-banner', 'warn', '接続テスト中…');
     try {
       const res = await fetch(url, {
-        method:'POST', headers:{'Content-Type':'text/plain;charset=UTF-8'},
-        body: JSON.stringify({action:'test', secret}),
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify({ action: 'test', secret }),
       });
       const json = await res.json();
-
       if (json.code === 'E040') {
-        _showBanner('cfg-banner','err','❌ 合言葉が違います\nGASのCONFIG → API_SECRETと同じ値を入力してください');
+        _showBanner('cfg-banner', 'err', '❌ 合言葉が違います');
       } else if (json.ok || json.code === 'OK') {
-        _showBanner('cfg-banner','ok','✅ 接続成功！GASと通信できています');
+        // v2.4: 会社名を保存して表示
+        const cname = json.companyName || '';
+        if (cname && cname !== '（会社名未設定）') {
+          LS.set('meishi_company_name', cname);
+          _showBanner('cfg-banner', 'ok', '✅ 接続成功！\n🏢 接続先：' + cname);
+        } else {
+          _showBanner('cfg-banner', 'ok', '✅ 接続成功！GASと通信できています');
+        }
       } else {
-        _showBanner('cfg-banner','ok','✅ 接続成功！（コード: ' + json.code + '）');
+        _showBanner('cfg-banner', 'ok', '✅ 接続成功（コード: ' + json.code + '）');
       }
-    } catch(err) {
-      _showBanner('cfg-banner','err',
-        '❌ 接続できませんでした\n\n原因:\n' +
-        '① URLが間違っている\n' +
-        '② デプロイの「アクセスできるユーザー」が「全員」でない\n\n' +
-        '詳細: ' + err.message);
+    } catch (err) {
+      _showBanner('cfg-banner', 'err', '❌ 接続できませんでした\n\n原因:\n① URLが間違っている\n② 「アクセスできるユーザー」が「全員」でない\n\n詳細: ' + err.message);
     }
   },
 
-  save() {
+  async save() {
     const url    = document.getElementById('cfg-url').value.trim();
     const secret = document.getElementById('cfg-secret').value.trim();
-    const sheet  = document.getElementById('cfg-sheet').value.trim();
-
-    if (!url)    return _showBanner('cfg-banner','err','URLを入力してください');
-    if (!secret) return _showBanner('cfg-banner','err','合言葉を入力してください');
-    if (!url.startsWith('https://script.google.com'))
-      return _showBanner('cfg-banner','err','URLが正しくないようです\nhttps://script.google.com/…で始まるURLを入力してください');
-    if (!url.endsWith('/exec'))
-      return _showBanner('cfg-banner','err','URLは /exec で終わっている必要があります');
-
-    LS.set('meishi_gas_url',      url);
-    LS.set('meishi_secret',       secret);
-    LS.set('meishi_target_sheet', sheet);
-
+    if (!url)    return _showBanner('cfg-banner', 'err', 'URLを入力してください');
+    if (!secret) return _showBanner('cfg-banner', 'err', '合言葉を入力してください');
+    if (!url.startsWith('https://script.google.com')) return _showBanner('cfg-banner', 'err', 'URLが正しくないようです');
+    if (!url.endsWith('/exec')) return _showBanner('cfg-banner', 'err', 'URLは /exec で終わっている必要があります');
+    LS.set('meishi_gas_url', url);
+    LS.set('meishi_secret',  secret);
+    // v2.4: 会社名を取得して保存（失敗しても続行）
+    try {
+      const res  = await fetch(url, {
+        method: 'POST', headers: { 'Content-Type': 'text/plain;charset=UTF-8' },
+        body: JSON.stringify({ action: 'test', secret }),
+      });
+      const json = await res.json();
+      if (json.companyName && json.companyName !== '（会社名未設定）') {
+        LS.set('meishi_company_name', json.companyName);
+      }
+    } catch (_) {}
     const empId = LS.empId();
     if (empId && /^\d{4}$/.test(empId)) {
       ST.empId = empId;
@@ -561,9 +750,9 @@ const Cfg = {
   },
 };
 
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 // S1: 社員番号
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 const Emp = {
   save() {
     const val = document.getElementById('inp-emp').value.trim();
@@ -585,27 +774,28 @@ const Emp = {
   },
 };
 
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 // S2: カメラ
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 const Camera = {
   async open() {
     show('s-cam');
     _refreshBadge();
     document.getElementById('back-overlay').classList.remove('show');
+    document.getElementById('shutter').onclick = () => Capture.shoot();
     await this.start();
   },
   async start() {
     try {
       if (camStream) this.stop();
       camStream = await navigator.mediaDevices.getUserMedia({
-        video:{facingMode:{ideal:'environment'}, width:{ideal:1280}}, audio:false,
+        video: { facingMode: { ideal: 'environment' }, width: { ideal: 1280 } }, audio: false,
       });
       const v = document.getElementById('video-el');
       v.srcObject = camStream;
       v.onloadedmetadata = () => { document.getElementById('shutter').disabled = false; };
-    } catch(err) {
-      Result.show('error','カメラエラー',
+    } catch (err) {
+      Result.show('error', 'カメラエラー',
         err.name === 'NotAllowedError'
           ? 'カメラの使用が許可されていません。\niPhoneの「設定」→「Safari」→「カメラ」を「許可」に変更してください'
           : 'カメラを起動できませんでした。\nページを再読み込みしてください\n（' + err.message + '）');
@@ -618,130 +808,122 @@ const Camera = {
   },
   toggleOrientation() {
     isPortrait = !isPortrait;
-    const box = document.getElementById('guide-box');
-    const btn = document.getElementById('orient-btn');
-    const txt = document.getElementById('guide-txt');
-    const tip = document.getElementById('cam-tip');
+    const box     = document.getElementById('guide-box');
+    const overlay = document.getElementById('cam-overlay');
+    const btn     = document.getElementById('orient-btn');
+    const txt     = document.getElementById('guide-txt');
+    const tip     = document.getElementById('cam-tip');
     if (isPortrait) {
-      box.className = 'guide-box portrait';
-      btn.textContent = '↔ 横型';
+      box.className       = 'guide-box portrait';
+      btn.textContent     = '↔ 横型';
       btn.classList.add('active');
-      txt.textContent = '縦型名刺を枠の中に入れてください';
-      tip.textContent = '💡 縦型名刺は枠を縦向きにしました';
+      txt.textContent     = '縦型名刺を枠に合わせてください';
+      tip.textContent     = '💡 縦型名刺モードです';
+      overlay.style.justifyContent = 'flex-start';
+      overlay.style.paddingTop     = '120px';
     } else {
-      box.className = 'guide-box landscape';
-      btn.textContent = '↕ 縦型';
+      box.className       = 'guide-box landscape';
+      btn.textContent     = '↕ 縦型';
       btn.classList.remove('active');
-      txt.textContent = '名刺を枠の中に入れてください';
-      tip.textContent = '💡 明るい場所で手ブレなく撮影してください';
+      txt.textContent     = '名刺を枠の中に合わせてください';
+      tip.textContent     = '💡 明るい場所で、ブレないように撮影してください';
+      overlay.style.justifyContent = 'center';
+      overlay.style.paddingTop     = '100px';
     }
   },
 };
 
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 // 撮影 → 両面確認 → OCR
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 const Capture = {
-  // 表面撮影
   shoot() {
     const video  = document.getElementById('video-el');
     const canvas = document.getElementById('work-canvas');
     if (!video.videoWidth) return;
-
-    // リサイズ（800pxに縮小して高速化）
-    const MAX = 800, r = Math.min(1, MAX / Math.max(video.videoWidth, video.videoHeight));
+    const MAX = 900, r = Math.min(1, MAX / Math.max(video.videoWidth, video.videoHeight));
     canvas.width  = Math.round(video.videoWidth  * r);
     canvas.height = Math.round(video.videoHeight * r);
     canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-
     ST.base64Front = canvas.toDataURL('image/jpeg', 0.82).split(',')[1];
     ST.base64Back  = null;
     ST.ts    = new Date().toISOString();
-    ST.reqId = ST.empId + '_' + ST.ts.replace(/\D/g,'').slice(0,14);
-
+    ST.reqId = ST.empId + '_' + ST.ts.replace(/\D/g, '').slice(0, 14);
     document.getElementById('thumb').src = canvas.toDataURL('image/jpeg', 0.82);
     document.getElementById('thumb-back').style.display = 'none';
-
-    // 裏面撮影を確認
     document.getElementById('back-overlay').classList.add('show');
   },
 
-  // 裏面撮影
   shootBack() {
     document.getElementById('back-overlay').classList.remove('show');
-    const tip = document.getElementById('cam-tip');
-    tip.textContent = '📷 裏面を枠の中に入れて撮影してください';
-
-    // シャッターを一時的に裏面撮影モードに
+    document.getElementById('cam-tip').textContent = '📷 裏面を枠の中に入れて撮影してください';
     const shutter = document.getElementById('shutter');
     shutter.onclick = () => {
       const video  = document.getElementById('video-el');
       const canvas = document.getElementById('work-canvas');
       if (!video.videoWidth) return;
-
-      const MAX = 800, r = Math.min(1, MAX / Math.max(video.videoWidth, video.videoHeight));
+      const MAX = 900, r = Math.min(1, MAX / Math.max(video.videoWidth, video.videoHeight));
       canvas.width  = Math.round(video.videoWidth  * r);
       canvas.height = Math.round(video.videoHeight * r);
       canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
-
       ST.base64Back = canvas.toDataURL('image/jpeg', 0.82).split(',')[1];
-
       const tb = document.getElementById('thumb-back');
-      tb.src           = canvas.toDataURL('image/jpeg', 0.82);
+      tb.src = canvas.toDataURL('image/jpeg', 0.82);
       tb.style.display = 'block';
-
-      // シャッターをデフォルトに戻す
       shutter.onclick = () => Capture.shoot();
-      tip.textContent = '💡 明るい場所で手ブレなく撮影してください';
-
+      document.getElementById('cam-tip').textContent = '💡 明るい場所で、ブレないように撮影してください';
       this.proceedOCR();
     };
   },
 
-  // OCR処理へ進む
   async proceedOCR() {
     document.getElementById('back-overlay').classList.remove('show');
     Camera.stop();
-
     _setProgress('名刺を読み取っています…');
     show('s-prog');
 
-    let extracted = {};
-    let warnMsg   = '';
+    let extracted = {}, warnMsg = '', isDupWarn = false, dupData = null;
 
     try {
-      const payload = {
-        action:      'extract',
-        imageBase64: ST.base64Front,
-        employeeId:  ST.empId,
-        timestamp:   ST.ts,
-      };
+      const payload = { action: 'extract', imageBase64: ST.base64Front, employeeId: ST.empId, timestamp: ST.ts };
       if (ST.base64Back) payload.imageBase64Back = ST.base64Back;
-
       const res = await Api.post(payload);
-
       if (res.ok) {
         extracted = res.extracted || {};
-        // 学習用に元データを保存
         ST.originalExtracted = JSON.parse(JSON.stringify(extracted));
-        ST.ocrHint           = res.ocrHint || '';
-        const filledCount = Object.values(extracted).filter(v => v && v.trim()).length;
-        if (filledCount === 0) {
-          warnMsg = '⚠️ 文字を読み取りましたが情報を抽出できませんでした\n項目を手入力して登録できます';
-        }
+        ST.ocrHint = res.ocrHint || '';
+        const filled = Object.values(extracted).filter(v => v && v.trim()).length;
+        if (filled === 0) warnMsg = '⚠️ 文字を読み取りましたが情報を抽出できませんでした\n項目を手入力して登録できます';
       } else {
-        warnMsg = '⚠️ 読み取りエラー（' + (res.code||'?') + '）\n' + (res.message||'不明なエラー') + '\n\n項目を手入力して登録できます';
+        warnMsg = '⚠️ 読み取りエラー（' + (res.code || '?') + '）\n' + (res.message || '') + '\n\n手入力して登録できます';
       }
-    } catch(err) {
-      warnMsg = '⚠️ 通信エラー\n' + err.message + '\n\n項目を手入力して登録できます';
+    } catch (err) {
+      warnMsg = '⚠️ 通信エラー\n' + err.message + '\n\n手入力して登録できます';
     }
 
-    Review.build(extracted, warnMsg);
+    // 重複チェック
+    if (extracted.email || (extracted.fullName && extracted.companyName)) {
+      try {
+        const dup = await Api.post({
+          action: 'checkDuplicate',
+          email: extracted.email || '',
+          fullName: extracted.fullName || '',
+          companyName: extracted.companyName || '',
+          position: extracted.position || '',
+          affiliation1: extracted.affiliation1 || '',
+        });
+        if (dup.isDuplicate) {
+          isDupWarn = true;
+          dupData   = dup;
+        }
+      } catch (_) {}
+    }
+
+    Review.build(extracted, warnMsg, isDupWarn, dupData);
     show('s-rev');
   },
 
   retake() {
-    // シャッターをデフォルトに戻す
     document.getElementById('shutter').onclick = () => Capture.shoot();
     Camera.open();
   },
@@ -751,103 +933,296 @@ const Capture = {
   },
 };
 
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 // S4: 確認フォーム
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 const Review = {
-  build(data, warnMsg) {
+  _vis: 'public',
+
+  build(data, warnMsg, isDupWarn, dupData) {
+    this._vis = 'public';
+    this.setVisibility('public');
+
     const banner = document.getElementById('rev-banner');
     if (warnMsg) { banner.textContent = warnMsg; banner.className = 'banner warn show'; }
     else         { banner.className = 'banner'; }
 
-    document.getElementById('fields-card').innerHTML = FIELDS.map(f => {
-      const val  = (data[f.key] || '').replace(/"/g,'&quot;');
-      const req  = f.req ? '<span class="req">必須</span>' : '';
-      const fill = val ? ' filled' : '';
-      return `<div class="f-row${fill}">
-        <label class="lbl" for="f-${f.key}">${f.label}${req}</label>
-        <input id="f-${f.key}" class="inp" type="text" value="${val}"
-          placeholder="（空欄でも登録できます）">
-      </div>`;
-    }).join('');
+    // 重複警告
+    const dupBanner = document.getElementById('dup-banner');
+    if (isDupWarn && dupData) {
+      const ed = dupData.existingData || {};
+      dupBanner.innerHTML = `<strong>⚠️ 同じ名刺が登録済みの可能性があります</strong><br>
+        登録済み: ${ed.companyName || ''} ${ed.fullName || ''} ${ed.position || ''}<br>
+        ${dupData.sameRole ? '役職・所属が同じです。重複登録でないか確認してください。' : '役職・所属が変わっています（異動・昇格）。そのまま登録できます。'}`;
+      dupBanner.classList.add('show');
+    } else {
+      dupBanner.classList.remove('show');
+    }
+
+    // フィールドをセクション別に生成
+    const wrap = document.getElementById('fields-wrap');
+    wrap.innerHTML = FIELDS_SECTIONS.map(sec => `
+      <div class="section-card">
+        <div class="section-hd">${sec.title}</div>
+        ${sec.fields.map(f => {
+          const val  = (data[f.key] || '').replace(/"/g, '&quot;');
+          const req  = f.req ? '<span class="req">必須</span>' : '';
+          const fill = val ? ' filled' : '';
+          return `<div class="f-row${fill}">
+            <label class="lbl" for="f-${f.key}">
+              <span class="lbl-icon">${f.icon}</span>${f.label}${req}
+            </label>
+            <input id="f-${f.key}" class="inp" type="text" value="${val}" placeholder="（空欄でも登録できます）">
+          </div>`;
+        }).join('')}
+      </div>`).join('');
+
     document.getElementById('memo').value = '';
   },
+
+  setVisibility(v) {
+    this._vis = v;
+    document.getElementById('vis-public') .classList.toggle('active', v === 'public');
+    document.getElementById('vis-private').classList.toggle('active', v === 'private');
+  },
+
   getData() {
     const d = {};
-    FIELDS.forEach(f => { d[f.key] = (document.getElementById('f-'+f.key)||{}).value||''; });
+    ALL_FIELDS.forEach(f => { d[f.key] = (document.getElementById('f-' + f.key) || {}).value || ''; });
     return d;
   },
 };
 
-// ════════════════════════════════════════════
-// 登録（Sheets保存）
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
+// 登録
+// ════════════════════════════════════════
 const Save = {
+  _lastData: null,
+
   async run() {
     _setProgress('スプレッドシートに登録中…');
     show('s-prog');
 
     const memoVal = document.getElementById('memo').value;
     const revData = Review.getData();
+    this._lastData = { ...revData, memo: memoVal };
 
     try {
       const payload = {
-        action:    'save',
-        data:      revData,
+        action: 'save',
+        data: revData,
         employeeId: ST.empId,
         timestamp:  ST.ts,
         requestId:  ST.reqId,
-        memo:       memoVal,
-        // 学習データ（OCR元データとユーザー修正を比較してGASで保存）
+        memo: memoVal,
+        visibility: Review._vis,
         originalExtracted: ST.originalExtracted,
-        ocrHint:           ST.ocrHint,
+        ocrHint: ST.ocrHint,
       };
-      // 書き出し先シートが指定されている場合は追加
-      const targetSheet = LS.targetSheet();
-      if (targetSheet) payload.targetSheet = targetSheet;
-
       const res = await Api.post(payload);
 
       if (res.status === 'DUPLICATE') {
-        Result.show('info','すでに登録済みです','この名刺はすでに登録されています\n（重複送信を防止しました）');
+        Result.show('info', 'すでに登録済みです', 'この名刺はすでに登録されています（重複送信を防止しました）');
       } else if (res.ok) {
-        // セッションデータに追加
-        Session.add(revData, memoVal);
+        Send.setCurrentData(revData, memoVal);
         Result.show(
           res.status === 'SUCCESS' ? 'success' : 'warn',
           res.status === 'SUCCESS' ? '登録完了！' : '要確認で保存しました',
-          res.message || ''
+          res.message || '', false, true
         );
       } else {
-        throw new Error(res.message || '登録に失敗しました（コード: ' + (res.code||'?') + '）');
+        throw new Error(res.message || '登録に失敗しました（コード: ' + (res.code || '?') + '）');
       }
-    } catch(err) {
-      Result.show('error','登録に失敗しました', err.message, true);
+    } catch (err) {
+      Result.show('error', '登録に失敗しました', err.message, true, false);
     }
   },
 };
 
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
+// 送信（メール / Teams）
+// ════════════════════════════════════════
+const Send = {
+  _data: null,
+
+  setCurrentData(data, memo) { this._data = { ...data, memo }; },
+
+  formatText() {
+    if (!this._data) return '';
+    let txt = '【名刺データ】\n';
+    ALL_FIELDS.forEach(f => { if (this._data[f.key]) txt += f.label + ': ' + this._data[f.key] + '\n'; });
+    if (this._data.memo) txt += 'メモ: ' + this._data.memo + '\n';
+    txt += '\n社員番号: ' + ST.empId + '　撮影日時: ' + new Date().toLocaleString('ja-JP');
+    return txt;
+  },
+
+  formatCSV() {
+    if (!this._data) return '';
+    const headers = ALL_FIELDS.map(f => f.label).join(',');
+    const values  = ALL_FIELDS.map(f => '"' + (this._data[f.key] || '').replace(/"/g, '""') + '"').join(',');
+    return headers + '\n' + values;
+  },
+
+  refreshSelect() {
+    const sel    = document.getElementById('send-email-sel');
+    if (!sel) return;
+    const emails = EmailMgr.getAll();
+    const def    = EmailMgr.getDefault();
+    sel.innerHTML = '<option value="">送信先を選択...</option>' +
+      emails.map(e => `<option value="${e}" ${e === def ? 'selected' : ''}>${e}</option>`).join('');
+  },
+
+  show() {
+    const sec = document.getElementById('send-section');
+    if (sec) { sec.style.display = 'block'; this.refreshSelect(); }
+  },
+  hide() {
+    const sec = document.getElementById('send-section');
+    if (sec) sec.style.display = 'none';
+  },
+
+  toggleAddEmail() {
+    const box  = document.getElementById('send-add-box');
+    const open = box.style.display === 'none' || box.style.display === '';
+    box.style.display = open ? 'flex' : 'none';
+    if (open) document.getElementById('send-email-inp').focus();
+  },
+
+  addEmail() {
+    const inp   = document.getElementById('send-email-inp');
+    const email = inp.value.trim();
+    if (!email || !email.includes('@')) { _showToast('有効なメールアドレスを入力してください'); return; }
+    EmailMgr.add(email);
+    inp.value = '';
+    document.getElementById('send-add-box').style.display = 'none';
+    this.refreshSelect();
+    _showToast('メールアドレスを追加しました');
+  },
+
+  openMail() {
+    const sel   = document.getElementById('send-email-sel');
+    const email = sel ? sel.value : '';
+    if (!email) { _showToast('送信先メールアドレスを選択してください'); return; }
+    const d = this._data || {};
+    const subject = encodeURIComponent('名刺データ: ' + (d.companyName || '') + ' ' + (d.fullName || ''));
+    const body    = encodeURIComponent(this.formatText());
+    window.location.href = 'mailto:' + email + '?subject=' + subject + '&body=' + body;
+    EmailMgr.add(email);
+    this.refreshSelect();
+    // 履歴に保存
+    HistoryMgr.add({
+      sendType: 'email', recipient: email,
+      companyName:  d.companyName  || '',
+      affiliation1: d.affiliation1 || '',
+      affiliation2: d.affiliation2 || '',
+      affiliation3: d.affiliation3 || '',
+      position:     d.position     || '',
+      fullName:     d.fullName     || '',
+    });
+  },
+
+  async copyForTeams() {
+    const text = this.formatText();
+    try {
+      await navigator.clipboard.writeText(text);
+      _showToast('コピーしました！Teamsを開いて貼り付けてください 💬');
+    } catch {
+      prompt('テキストをコピーしてTeamsに貼り付けてください:', text);
+    }
+    const d = this._data || {};
+    HistoryMgr.add({
+      sendType: 'teams', recipient: 'Teams',
+      companyName:  d.companyName  || '',
+      affiliation1: d.affiliation1 || '',
+      affiliation2: d.affiliation2 || '',
+      affiliation3: d.affiliation3 || '',
+      position:     d.position     || '',
+      fullName:     d.fullName     || '',
+    });
+  },
+
+  async copyCSV() {
+    const csv = this.formatCSV();
+    try {
+      await navigator.clipboard.writeText(csv);
+      _showToast('CSVコピー完了！Excelに貼り付けてください 📊');
+    } catch {
+      prompt('CSVをコピーしてExcelに貼り付けてください:', csv);
+    }
+  },
+};
+
+// ════════════════════════════════════════
 // S5: 完了
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 const Result = {
-  show(type, title, msg, showRetry=false) {
-    const icons = {success:'✅', warn:'⚠️', error:'❌', info:'ℹ️'};
-    document.getElementById('done-icon').textContent  = icons[type]||'❓';
+  _count: 0,
+  show(type, title, msg, showRetry = false, showSend = false) {
+    const icons = { success: '✅', warn: '⚠️', error: '❌', info: 'ℹ️' };
+    document.getElementById('done-icon') .textContent = icons[type] || '❓';
     document.getElementById('done-title').textContent = title;
-    document.getElementById('done-msg').textContent   = msg;
+    document.getElementById('done-msg')  .textContent = msg;
     document.getElementById('retry-btn').style.display = showRetry ? 'flex' : 'none';
-    Session.updateUI();
+    if (showSend) {
+      this._count++;
+      document.getElementById('session-info').textContent = 'このセッション: ' + this._count + '枚登録済み';
+      Send.show();
+    } else {
+      Send.hide();
+    }
     show('s-done');
   },
 };
 
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
+// S6: 履歴
+// ════════════════════════════════════════
+const History = {
+  open() {
+    Camera.stop();
+    this.render();
+    show('s-hist');
+  },
+  render() {
+    const items = HistoryMgr.purge();
+    const body  = document.getElementById('hist-body');
+    if (!items.length) {
+      body.innerHTML = '<p class="hist-empty">📭 送信履歴はありません<br>（7日間保持されます）</p>';
+      return;
+    }
+    body.innerHTML = items.map(item => {
+      const isEmail = item.sendType === 'email';
+      const dt = new Date(item.sendTime).toLocaleString('ja-JP');
+      const affils = [item.affiliation1, item.affiliation2, item.affiliation3].filter(Boolean).join(' / ');
+      return `<div class="hist-item ${isEmail ? '' : 'teams'}">
+        <span class="hist-type ${isEmail ? 'email' : 'teams'}">${isEmail ? '📧 メール' : '💬 Teams'}</span>
+        <p class="hist-company">${_esc(item.companyName || '（会社名なし）')}</p>
+        <p class="hist-person">${_esc(item.position || '')} ${_esc(item.fullName || '（氏名なし）')}</p>
+        ${affils ? `<p class="hist-affil">${_esc(affils)}</p>` : ''}
+        <p class="hist-time">📅 ${dt}</p>
+        ${isEmail ? `<p class="hist-recip">送信先: ${_esc(item.recipient)}</p>` : ''}
+      </div>`;
+    }).join('') + `<button class="hist-clear-btn" onclick="HistoryMgr.clear();History.render()">🗑️ 履歴をすべて削除</button>`;
+  },
+};
+
+// ════════════════════════════════════════
 // 内部ヘルパー
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 function _refreshBadge() {
   const el = document.getElementById('cam-emp');
   if (el) el.textContent = ST.empId || '----';
+  // v2.4: 会社名をバッジ下に表示
+  const cn   = document.getElementById('cam-company');
+  const name = LS.companyName();
+  if (cn) {
+    if (name && name !== '（会社名未設定）') {
+      cn.textContent   = '🏢 ' + name;
+      cn.style.display = '';
+    } else {
+      cn.style.display = 'none';
+    }
+  }
 }
 function _setProgress(txt) {
   const el = document.getElementById('prog-txt');
@@ -864,21 +1239,32 @@ function _hideBanner(id) {
   if (el) el.className = 'banner';
 }
 function toggleEye(inputId, btn) {
-  const el  = document.getElementById(inputId);
-  const vis = el.type === 'password';
-  el.type   = vis ? 'text' : 'password';
-  btn.textContent = vis ? '🙈' : '👁';
+  const el = document.getElementById(inputId);
+  const v  = el.type === 'password';
+  el.type  = v ? 'text' : 'password';
+  btn.textContent = v ? '🙈' : '👁';
+}
+function _showToast(msg) {
+  const t = document.getElementById('_toast');
+  t.textContent  = msg;
+  t.style.opacity = '1';
+  clearTimeout(t._tmr);
+  t._tmr = setTimeout(() => { t.style.opacity = '0'; }, 2800);
+}
+function _esc(s) {
+  return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 // 起動
-// ════════════════════════════════════════════
+// ════════════════════════════════════════
 document.addEventListener('DOMContentLoaded', () => {
+  HistoryMgr.purge(); // 7日超えを削除
   const gasUrl = LS.gasUrl();
   const secret = LS.secret();
   const empId  = LS.empId();
 
-  if (!gasUrl || !secret) { show('s-cfg'); return; }
+  if (!gasUrl || !secret) { show('s-cfg'); Cfg.refreshEmailList(); return; }
   if (!empId || !/^\d{4}$/.test(empId)) { show('s-emp'); return; }
 
   ST.empId = empId;
