@@ -143,9 +143,8 @@ html,body{height:100%;height:100dvh;font-family:-apple-system,'Hiragino Sans',sa
 .cam-bot{
   position:absolute;bottom:0;left:0;right:0;z-index:10;
   display:flex;flex-direction:column;align-items:center;
-  padding:10px 20px max(44px,env(safe-area-inset-bottom,44px));gap:10px;
+  padding:16px 20px max(34px,env(safe-area-inset-bottom,34px));
   background:linear-gradient(to top,rgba(0,0,0,.75),transparent)}
-.cam-tip{font-size:14px;color:rgba(255,255,255,.8);text-align:center}
 .shutter{width:78px;height:78px;border-radius:50%;
   border:4px solid rgba(255,255,255,.9);background:rgba(255,255,255,.15);
   cursor:pointer;position:relative;transition:transform .1s;flex-shrink:0}
@@ -167,9 +166,13 @@ html,body{height:100%;height:100dvh;font-family:-apple-system,'Hiragino Sans',sa
 
 /* ════ S4: 確認・編集 ════ */
 #s-rev{background:var(--bg)}
-.rev-head{background:var(--blue);color:#fff;padding:52px 18px 18px}
-.rev-head h1{font-size:22px;font-weight:800}
-.rev-head p {font-size:15px;opacity:.9;margin-top:6px;line-height:1.6}
+.rev-head{background:var(--blue);color:#fff;
+  padding:max(env(safe-area-inset-top,14px),14px) 16px 12px;
+  display:flex;align-items:center;gap:10px}
+.rev-back-btn{background:none;border:1.5px solid rgba(255,255,255,.65);color:#fff;
+  padding:7px 13px;border-radius:18px;font-size:13px;font-weight:700;
+  cursor:pointer;white-space:nowrap;flex-shrink:0;-webkit-appearance:none}
+.rev-head h1{font-size:15px;font-weight:800;flex:1;line-height:1.4}
 .rev-body{flex:1;padding:14px 14px 0;display:flex;flex-direction:column;gap:14px}
 .thumb-row{display:flex;gap:8px}
 .thumb{flex:1;max-height:110px;object-fit:contain;border-radius:10px;background:#eee}
@@ -178,21 +181,24 @@ html,body{height:100%;height:100dvh;font-family:-apple-system,'Hiragino Sans',sa
 .section-card{background:#fff;border-radius:var(--radius);box-shadow:0 1px 4px rgba(0,0,0,.1);overflow:hidden}
 .section-hd{padding:12px 16px;background:var(--blue-lt);border-bottom:1px solid #c5d8f7;
   font-size:var(--font-label);font-weight:800;color:var(--blue-dk)}
-.f-row{display:grid;grid-template-columns:1fr auto;gap:4px;align-items:start;
-  padding:12px 16px;border-bottom:1px solid var(--border)}
+.f-row{display:flex;flex-direction:column;
+  padding:10px 16px;border-bottom:1px solid var(--border)}
 .f-row:last-child{border-bottom:none}
 .f-row.filled .inp{border-color:#aacbff;background:#f0f6ff}
 .f-row .lbl-icon{font-size:16px;margin-right:4px}
 .req{display:inline-flex;font-size:11px;font-weight:700;
   background:var(--red);color:#fff;padding:2px 6px;border-radius:3px;margin-left:5px}
-/* ✕ ボタン（フィールドクリア） */
+/* f-input-wrap: input + ✕ を横並び（✕はinput枠内右側に絶対配置） */
+.f-input-wrap{position:relative;display:flex;align-items:center}
+.f-input-wrap .inp{padding-right:42px}
+/* ✕ ボタン（input枠内の右端に配置・やや小さめ） */
 .f-clear-btn{
-  width:34px;height:34px;border:none;border-radius:50%;
-  background:#e8eaed;color:var(--sub);font-size:16px;font-weight:700;
+  position:absolute;right:8px;top:50%;transform:translateY(-50%);
+  width:26px;height:26px;border:none;border-radius:50%;
+  background:#e8eaed;color:var(--sub);font-size:12px;font-weight:700;
   cursor:pointer;display:flex;align-items:center;justify-content:center;
-  margin-top:28px;flex-shrink:0;transition:background .12s}
+  flex-shrink:0;transition:background .12s}
 .f-clear-btn:hover{background:#dadce0;color:var(--red)}
-.f-input-wrap{display:flex;flex-direction:column;gap:4px}
 /* 郵便番号ヒント */
 .postal-hint{font-size:12px;color:var(--blue);margin-top:3px;display:none}
 .postal-hint.show{display:block}
@@ -412,7 +418,7 @@ textarea.inp{resize:none;line-height:1.7}
     <div id="guide-box" class="guide-box landscape">
       <div class="cor tl"></div><div class="cor tr"></div>
       <div class="cor bl"></div><div class="cor br"></div>
-      <span id="guide-txt" class="guide-inner-txt">名刺を枠内にあわせてください</span>
+      <span id="guide-txt" class="guide-inner-txt">名刺を枠内に<br>あわせてください</span>
     </div>
   </div>
 
@@ -426,7 +432,6 @@ textarea.inp{resize:none;line-height:1.7}
   </div>
 
   <div class="cam-bot">
-    <p id="cam-tip" class="cam-tip">💡 明るい場所で、ブレないように撮影してください</p>
     <button id="shutter" class="shutter" disabled>
       <span class="shutter-dot"></span>
     </button>
@@ -443,8 +448,8 @@ textarea.inp{resize:none;line-height:1.7}
 <!-- ══ S4: 確認・編集 ══ -->
 <div id="s-rev" class="screen">
   <div class="rev-head">
-    <h1>📋 内容を確認してください</h1>
-    <p>自動で読み取りました。間違いがあればクリックして修正できます。✕ で項目をクリアできます</p>
+    <button class="rev-back-btn" onclick="Capture.retake()">← 戻る</button>
+    <h1>📋 内容を確認して必要に応じて修正ください</h1>
   </div>
   <div class="rev-body">
     <div id="rev-banner" class="banner"></div>
@@ -893,7 +898,7 @@ const Camera = {
     const btn = document.getElementById('orient-btn');
     const txt = document.getElementById('guide-txt');
     // テキストは縦横共通
-    txt.textContent = '名刺を枠内にあわせてください';
+    txt.innerHTML = '名刺を枠内に<br>あわせてください';
     if (isPortrait) {
       box.className   = 'guide-box portrait';
       btn.textContent = '↔ 横型';
@@ -929,7 +934,6 @@ const Capture = {
     document.getElementById('back-overlay').classList.add('show');
     const shutter = document.getElementById('shutter');
     shutter.onclick = () => Capture.shoot();
-    document.getElementById('cam-tip').textContent = '💡 明るい場所で、ブレないように撮影してください';
   },
 
   shootBack() {
@@ -945,7 +949,6 @@ const Capture = {
     tb.style.display = 'block';
 
     document.getElementById('shutter').onclick = () => Capture.shoot();
-    document.getElementById('cam-tip').textContent = '💡 明るい場所で、ブレないように撮影してください';
     this.proceedOCR();
   },
 
@@ -1021,17 +1024,17 @@ const Review = {
             const val = data[f.key] || '';
             const isPostal = f.key === 'postalCode';
             return `<div class="f-row${val ? ' filled' : ''}" id="frow-${f.key}">
+              <label class="lbl" for="f-${f.key}">
+                <span class="lbl-icon">${f.icon}</span>${f.label}${f.req ? '<span class="req">必須</span>' : ''}
+              </label>
               <div class="f-input-wrap">
-                <label class="lbl" for="f-${f.key}">
-                  <span class="lbl-icon">${f.icon}</span>${f.label}${f.req ? '<span class="req">必須</span>' : ''}
-                </label>
                 <input id="f-${f.key}" class="inp" type="text" value="${_esc(val)}"
                   placeholder="（空欄でも登録できます）"
                   oninput="Review._onInput('${f.key}',this)"
                   ${isPostal ? `onblur="Review._onPostal(this)"` : ''}>
-                ${isPostal ? `<span id="postal-hint-${f.key}" class="postal-hint">📍 住所を自動入力中...</span>` : ''}
+                <button class="f-clear-btn" onclick="Review.clearField('${f.key}')" title="クリア">✕</button>
               </div>
-              <button class="f-clear-btn" onclick="Review.clearField('${f.key}')" title="クリア">✕</button>
+              ${isPostal ? `<span id="postal-hint-${f.key}" class="postal-hint">📍 住所を自動入力中...</span>` : ''}
             </div>`;
           }).join('')}
         </div>`).join('');
