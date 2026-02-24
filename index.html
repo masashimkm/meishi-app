@@ -980,7 +980,7 @@ const Capture = {
     // 重複チェック
     if (extracted.email || (extracted.fullName && extracted.companyName)) {
       try {
-        const dup = await Api.post({ action:'checkDuplicate', email:extracted.email||'', fullName:extracted.fullName||'', companyName:extracted.companyName||'', position:extracted.position||'', affiliation1:extracted.affiliation1||'' });
+        const dup = await Api.post({ action:'checkDuplicate', employeeId:ST.empId, email:extracted.email||'', fullName:extracted.fullName||'', companyName:extracted.companyName||'', position:extracted.position||'', affiliation1:extracted.affiliation1||'' });
         if (dup.isDuplicate) { isDupWarn = true; dupData = dup; }
       } catch (_) {}
     }
